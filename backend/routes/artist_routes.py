@@ -22,7 +22,6 @@ def create_artist(artist: ArtistCreate, db: Session = Depends(get_db)):
     db.refresh(db_artist)
     return db_artist
 
-
 @router.get("/{artist_id}", response_model=ArtistResponse)
 def get_artist(artist_id: int, db: Session = Depends(get_db)):
     db_artist = db.query(Artist).filter(Artist.id == artist_id).first()
@@ -30,8 +29,34 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Artist not found")
     return db_artist
 
-
 @router.get("/", response_model=list[ArtistResponse])
-def list_artists(db: Session = Depends(get_db)):
-    artists = db.query(Artist).all()
-    return artists
+def list_artists(
+    zip_code: str | None = None,
+    genre: str | None = None,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    min_listeners: int | None = None,
+    max_listeners: int | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Artist)
+
+    if zip_code:
+        query = query.filter(Artist.zip_code == zip_code)
+
+    if genre:
+        query = query.filter(Artist.genre == genre)
+
+    if first_name:
+        query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))
+
+    if last_name:
+        query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
+
+    if min_listeners is not None:
+        query = query.filter(Artist.monthly_listeners >= min_listeners)
+
+    if max_listeners is not None:
+        query = query.filter(Artist.monthly_listeners <= max_listeners)
+
+    return query.all()
