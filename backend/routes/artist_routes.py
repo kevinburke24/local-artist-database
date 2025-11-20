@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend.db.database import SessionLocal
@@ -37,6 +37,10 @@ def list_artists(
     last_name: str | None = None,
     min_listeners: int | None = None,
     max_listeners: int | None = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    sort_by: str = Query("last_name"),
+    sort_order: str = Query("asc"),
     db: Session = Depends(get_db)
 ):
     query = db.query(Artist)
@@ -59,4 +63,27 @@ def list_artists(
     if max_listeners is not None:
         query = query.filter(Artist.monthly_listeners <= max_listeners)
 
-    return query.all()
+    # adding sorting logic
+
+    valid_sort_fields = {
+        "last_name" : Artist.last_name,
+        "monthly_listeners" : Artist.monthly_listeners,
+        "created_at" : Artist.created_at
+    }
+
+    if sort_by not in valid_sort_fields:
+        raise HTTPException(status_code=400, detail="Invalid sort field")
+
+    sort_column = valid_sort_fields[sort_by]
+
+    if sort_order.lower() == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+    
+    # pagination
+
+    query = query.offset(offset).limit(limit)
+    artists = query.all()
+
+    return artists
