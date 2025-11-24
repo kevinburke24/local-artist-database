@@ -12,19 +12,33 @@ interface Artist {
 
 function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // filter state
+  const [name, setName] = useState("");
+  const [genre, setGenre] = useState("");
+  const [zip, setZip] = useState("");
+  const [minListeners, setMinListeners] = useState("");
+  const [maxListeners, setMaxListeners] = useState("");
+
+  async function load() {
+    try {
+      const data = await fetchArtists({
+        name,
+        genre,
+        zip,
+        min_listeners: minListeners ? Number(minListeners) : undefined,
+        max_listeners: maxListeners ? Number(maxListeners) : undefined
+      });
+      setArtists(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchArtists();
-        setArtists(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
   }, []);
 
@@ -33,6 +47,37 @@ function App() {
   return (
     <div style={{ padding: "20px" }}>
       <h1>Local Artist Database</h1>
+
+      {/* FILTER UI */}
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          placeholder="Genre"
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+        />
+        <input
+          placeholder="Zip"
+          value={zip}
+          onChange={(e) => setZip(e.target.value)}
+        />
+        <input
+          placeholder="Min Listeners"
+          value={minListeners}
+          onChange={(e) => setMinListeners(e.target.value)}
+        />
+        <input
+          placeholder="Max Listeners"
+          value={maxListeners}
+          onChange={(e) => setMaxListeners(e.target.value)}
+        />
+
+        <button onClick={load}>Search</button>
+      </div>
       
       <table border={1} cellPadding={8} style={{ marginTop: "20px" }}>
         <thead>
@@ -54,6 +99,7 @@ function App() {
           ))}
         </tbody>
       </table>
+      {artists.length === 0 && !loading && <div>No results found.</div>}
     </div>
   );
 }
