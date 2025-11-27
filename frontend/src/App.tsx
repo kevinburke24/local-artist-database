@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { fetchArtists } from "./api";
 import { Routes, Route, Link } from "react-router-dom";
 import ArtistDetail from "./ArtistDetail";
+import ArtistTable from "./components/ArtistTable";
+import ArtistFilters from "./components/ArtistFilters";
+import PageLayout from "./components/PageLayout"
 
 interface Artist {
   id: number;
@@ -53,62 +56,20 @@ function App() {
         element={
           <div style={{ padding: "20px" }}>
           <h1>Local Artist Database</h1>
-        {/* FILTER UI */}
-        <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-          <input
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+          <PageLayout>
+          <ArtistFilters
+            name={name} setName={setName}
+            genre={genre} setGenre={setGenre}
+            zip={zip} setZip={setZip}
+            minListeners={minListeners} setMinListeners={setMinListeners}
+            maxListeners={maxListeners} setMaxListeners={setMaxListeners}
+            onSearch={load}
           />
-          <input
-            placeholder="Genre"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-          />
-          <input
-            placeholder="Zip"
-            value={zip}
-            onChange={(e) => setZip(e.target.value)}
-          />
-          <input
-            placeholder="Min Listeners"
-            value={minListeners}
-            onChange={(e) => setMinListeners(e.target.value)}
-          />
-          <input
-            placeholder="Max Listeners"
-            value={maxListeners}
-            onChange={(e) => setMaxListeners(e.target.value)}
-          />
-
-          <button onClick={load}>Search</button>
-        </div>
           {/* TABLE */}
-        <table border={1} cellPadding={8} style={{ marginTop: "20px" }}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Genre</th>
-              <th>Zip</th>
-              <th>Listeners</th>
-            </tr>
-          </thead>
-          <tbody>
-            {artists.map(a => (
-              <tr key={a.id}>
-                <td>
-                  <Link to={`/artists/${a.id}`}>
-                  {a.first_name} {a.last_name}
-                  </Link>
-                </td>
-                <td>{a.genre}</td>
-                <td>{a.zip_code}</td>
-                <td>{a.monthly_listeners ?? "N/A"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {artists.length === 0 && !loading && <div>No results found.</div>}
+          {loading && <div>Loading...</div>}
+          {!loading && <ArtistTable artists={artists} />}
+          {!loading && artists.length === 0 && <div>No results found.</div>}
+          </PageLayout>
           </div>
         }
       />
