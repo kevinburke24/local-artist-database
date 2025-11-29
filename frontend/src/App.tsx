@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchArtists } from "./api";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import ArtistDetail from "./ArtistDetail";
 import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
