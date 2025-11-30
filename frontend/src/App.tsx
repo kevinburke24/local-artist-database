@@ -20,6 +20,9 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // filter state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
   const [name, setName] = useState("");
   const [genre, setGenre] = useState("");
   const [zip, setZip] = useState("");
@@ -33,9 +36,12 @@ function App() {
         genre,
         zip,
         min_listeners: minListeners ? Number(minListeners) : undefined,
-        max_listeners: maxListeners ? Number(maxListeners) : undefined
+        max_listeners: maxListeners ? Number(maxListeners) : undefined,
+        page,
+        limit,
       });
-      setArtists(data);
+      setArtists(data.artists);
+      setTotal(data.total);
     } catch (err) {
       console.error(err);
     } finally {
@@ -45,7 +51,7 @@ function App() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
 
   if (loading) return <div>Loading artists...</div>;
 
@@ -69,6 +75,26 @@ function App() {
           {loading && <div>Loading...</div>}
           {!loading && <ArtistTable artists={artists} />}
           {!loading && artists.length === 0 && <div>No results found.</div>}
+          {/* PAGINATION */}
+          <div style={{ marginTop: 20 }}>
+            <button 
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </button>
+
+            <span style={{ margin: "0 10px" }}>
+              Page {page} of {Math.ceil(total / limit)}
+            </span>
+
+            <button 
+              disabled={page >= Math.ceil(total / limit)}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
           </PageLayout>
           </div>
         }

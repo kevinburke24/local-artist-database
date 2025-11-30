@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-
 from backend.db.database import SessionLocal
 from backend.models.artist import Artist
 from backend.schemas.artist import ArtistCreate, ArtistResponse
+from backend.schemas.pagination import ArtistListResponse
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
 
@@ -29,16 +29,16 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Artist not found")
     return db_artist
 
-@router.get("/", response_model=list[ArtistResponse])
+@router.get("/", response_model=ArtistListResponse)
 def list_artists(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     zip_code: str | None = None,
     genre: str | None = None,
     first_name: str | None = None,
     last_name: str | None = None,
     min_listeners: int | None = None,
     max_listeners: int | None = None,
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
     sort_by: str = Query("last_name"),
     sort_order: str = Query("asc"),
     db: Session = Depends(get_db)
@@ -80,10 +80,15 @@ def list_artists(
         query = query.order_by(sort_column.desc())
     else:
         query = query.order_by(sort_column.asc())
-    
+
     # pagination
+    skip = (page-1) * limit
+    artists = query.offset(skip).limit(limit).all()
+    total = query.count()
 
-    query = query.offset(offset).limit(limit)
-    artists = query.all()
-
-    return artists
+    return {
+        "total" : total,
+        "page" : page,
+        "limit" : limit,
+        "artists" : artists
+    }
