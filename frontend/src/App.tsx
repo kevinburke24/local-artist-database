@@ -21,7 +21,7 @@ function App() {
 
   // filter state
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit] = useState(20);
   const [total, setTotal] = useState(0);
   const [name, setName] = useState("");
   const [genre, setGenre] = useState("");
