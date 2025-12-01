@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from backend.db.database import SessionLocal
 from backend.models.artist import Artist
+from backend.models.search_log import SearchLog
 from backend.schemas.artist import ArtistCreate, ArtistResponse
 from backend.schemas.pagination import ArtistListResponse
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
+
+limiter = Limiter(key_func=get_remote_address)
 
 def get_db():
     db = SessionLocal()
@@ -30,7 +35,8 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
     return db_artist
 
 @router.get("/", response_model=ArtistListResponse)
-def list_artists(
+@limiter.limit("10/second")
+def list_artists(request: Request,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     zip_code: str | None = None,
@@ -43,6 +49,18 @@ def list_artists(
     sort_order: str = Query("asc"),
     db: Session = Depends(get_db)
 ):
+    log = SearchLog(
+        first_name=first_name,
+        last_name=last_name,
+        genre=genre,
+        zip_code=zip_code,
+        min_listeners=min_listeners,
+        max_listeners=max_listeners,
+        page=page,
+        limit=limit
+    )
+    db.add(log)
+    db.commit()
     query = db.query(Artist)
 
     if zip_code:

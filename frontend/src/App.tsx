@@ -5,6 +5,7 @@ import ArtistDetail from "./ArtistDetail";
 import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
 import PageLayout from "./components/PageLayout"
+import SkeletonTable from "./components/SkeletonTable";
 
 interface Artist {
   id: number;
@@ -18,6 +19,7 @@ interface Artist {
 function App() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("")
 
   // filter state
   const [page, setPage] = useState(1);
@@ -30,6 +32,7 @@ function App() {
   const [maxListeners, setMaxListeners] = useState("");
 
   async function load() {
+    setLoading(true)
     try {
       const data = await fetchArtists({
         name,
@@ -42,8 +45,8 @@ function App() {
       });
       setArtists(data.artists);
       setTotal(data.total);
-    } catch (err) {
-      console.error(err);
+    } catch (err : any) {
+      setError("Failed to load results.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +75,8 @@ function App() {
             onSearch={load}
           />
           {/* TABLE */}
-          {loading && <div>Loading...</div>}
+          {loading && <SkeletonTable/>}
+          {error && <div style={{ color : "red" }}>{error}</div>}
           {!loading && <ArtistTable artists={artists} />}
           {!loading && artists.length === 0 && <div>No results found.</div>}
           {/* PAGINATION */}
