@@ -16,3 +16,9 @@ export async function fetchArtists(params: any) {
 
     return res.json();
 }
+
+export async function fetchArtist(id : string | undefined) {
+    const res = await fetch(`${API_URL}/artists/${id}`);
+    if(!res.ok) throw new Error("Failed to fetch artist");
+    return res.json();
+}

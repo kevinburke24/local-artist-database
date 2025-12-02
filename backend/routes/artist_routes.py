@@ -7,6 +7,8 @@ from backend.models.artist import Artist
 from backend.models.search_log import SearchLog
 from backend.schemas.artist import ArtistCreate, ArtistResponse
 from backend.schemas.pagination import ArtistListResponse
+from backend.schemas.artist_query import ArtistQueryParams
+from backend.utils.errors import error
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
 
@@ -36,24 +38,27 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=ArtistListResponse)
 @limiter.limit("10/second")
-def list_artists(request: Request,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    zip_code: str | None = None,
-    genre: str | None = None,
-    first_name: str | None = None,
-    last_name: str | None = None,
-    min_listeners: int | None = None,
-    max_listeners: int | None = None,
+def list_artists(
+    request: Request,
+    params: ArtistQueryParams = Depends(),
     sort_by: str = Query("last_name"),
     sort_order: str = Query("asc"),
     db: Session = Depends(get_db)
 ):
+    first_name = params.first_name
+    last_name = params.last_name
+    genre = params.genre
+    zip = params.zip_code
+    min_listeners = params.min_listeners
+    max_listeners = params.max_listeners
+    page = params.page
+    limit = params.limit
+
     log = SearchLog(
         first_name=first_name,
         last_name=last_name,
         genre=genre,
-        zip_code=zip_code,
+        zip_code=zip,
         min_listeners=min_listeners,
         max_listeners=max_listeners,
         page=page,
@@ -63,23 +68,26 @@ def list_artists(request: Request,
     db.commit()
     query = db.query(Artist)
 
-    if zip_code:
-        query = query.filter(Artist.zip_code == zip_code)
+    try:
+        if zip:
+            query = query.filter(Artist.zip_code == zip)
 
-    if genre:
-        query = query.filter(Artist.genre == genre)
+        if genre:
+            query = query.filter(Artist.genre == genre)
 
-    if first_name:
-        query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))
+        if first_name:
+            query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))
 
-    if last_name:
-        query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
+        if last_name:
+            query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
 
-    if min_listeners is not None:
-        query = query.filter(Artist.monthly_listeners >= min_listeners)
+        if min_listeners is not None:
+            query = query.filter(Artist.monthly_listeners >= min_listeners)
 
-    if max_listeners is not None:
-        query = query.filter(Artist.monthly_listeners <= max_listeners)
+        if max_listeners is not None:
+            query = query.filter(Artist.monthly_listeners <= max_listeners)
+    except Exception as e:
+        return error("Failed to fetch artists")
 
     # adding sorting logic
 
