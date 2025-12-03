@@ -15,14 +15,6 @@ ALLOWED_ORIGINS = [
     "https://local-artist-database.vercel.app/"
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,  # for dev only
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 app = FastAPI()
 app.state.limiter=limiter
 app.add_exception_handler(RateLimitExceeded, ...)
@@ -30,6 +22,14 @@ app.add_exception_handler(RateLimitExceeded, ...)
 Base.metadata.create_all(bind=engine)
 
 app.include_router(artist_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,  # for dev only
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
