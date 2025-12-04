@@ -9,9 +9,10 @@ from backend.models.artist import Artist
 from backend.routes.artist_routes import router as artist_router
 from backend.routes.artist_routes import limiter, get_db
 import logging
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "https://localhost:5173",
     "https://local-artist-database.vercel.app"
 ]
 

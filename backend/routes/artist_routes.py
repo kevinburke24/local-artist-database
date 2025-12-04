@@ -21,7 +21,7 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/", response_model=ArtistResponse)
+@router.post("", response_model=ArtistResponse)
 def create_artist(artist: ArtistCreate, db: Session = Depends(get_db)):
     db_artist = Artist(**artist.dict())
     db.add(db_artist)
@@ -36,7 +36,7 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Artist not found")
     return db_artist
 
-@router.get("/", response_model=ArtistListResponse)
+@router.get("", response_model=ArtistListResponse)
 @limiter.limit("10/second")
 def list_artists(
     request: Request,
