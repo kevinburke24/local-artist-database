@@ -12,7 +12,7 @@ import logging
 
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://local-artist-database.vercel.app/"
+    "https://local-artist-database.vercel.app"
 ]
 
 app = FastAPI()
@@ -25,7 +25,7 @@ app.include_router(artist_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,  # for dev only
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

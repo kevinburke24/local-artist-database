@@ -2,7 +2,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export async function fetchArtists(params: any) {
     const query = new URLSearchParams();
-
     if (params.name) query.append("first_name", params.name);
     if (params.genre) query.append("genre", params.genre);
     if (params.zip) query.append("zip_code", params.zip);
