@@ -6,8 +6,10 @@ VALID_GENRES = {"indie", "rock", "pop", "soul", "country", "hiphop"}
 class ArtistQueryParams(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    stage_name: Optional[str] = None
     genre: Optional[str] = None
     zip_code: Optional[str] = Field(None, pattern=r"^\d{5}$")
+    neighborhood: Optional[str] = None
     min_listeners: Optional[int] = Field(None, ge=0)
     max_listeners: Optional[int] = Field(None, ge=0)
     page: int = Field(1, ge=1)

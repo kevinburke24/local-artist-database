@@ -47,8 +47,10 @@ def list_artists(
 ):
     first_name = params.first_name
     last_name = params.last_name
+    stage_name = params.stage_name
     genre = params.genre
     zip = params.zip_code
+    neighborhood = params.neighborhood
     min_listeners = params.min_listeners
     max_listeners = params.max_listeners
     page = params.page
@@ -57,8 +59,10 @@ def list_artists(
     log = SearchLog(
         first_name=first_name,
         last_name=last_name,
+        stage_name=stage_name,
         genre=genre,
         zip_code=zip,
+        neighborhood=neighborhood,
         min_listeners=min_listeners,
         max_listeners=max_listeners,
         page=page,
@@ -80,12 +84,16 @@ def list_artists(
 
         if last_name:
             query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
+        
+        if stage_name:
+            query = query.filter(Artist.stage_name.ilike(f"%{stage_name}%"))
 
         if min_listeners is not None:
             query = query.filter(Artist.monthly_listeners >= min_listeners)
 
         if max_listeners is not None:
             query = query.filter(Artist.monthly_listeners <= max_listeners)
+
     except Exception as e:
         return error("Failed to fetch artists")
 

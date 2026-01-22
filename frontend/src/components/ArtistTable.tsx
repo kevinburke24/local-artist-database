@@ -4,8 +4,10 @@ interface Artist {
   id: number;
   first_name: string;
   last_name: string;
+  artist_name: string;
   genre: string;
   zip_code: string;
+  neighborhood: string;
   monthly_listeners: number | null;
 }
 
@@ -19,8 +21,10 @@ export default function ArtistTable({ artists }: Props) {
       <thead>
         <tr>
           <th>Name</th>
+          <th>Artist Name</th>
           <th>Genre</th>
           <th>Zip</th>
+          <th>Neighborhood</th>
           <th>Listeners</th>
         </tr>
       </thead>
@@ -32,8 +36,10 @@ export default function ArtistTable({ artists }: Props) {
                 {a.first_name} {a.last_name}
               </Link>
             </td>
+            <td> {a.artist_name} </td>
             <td>{a.genre}</td>
             <td>{a.zip_code}</td>
+            <td>{a.neighborhood}</td>
             <td>{a.monthly_listeners ?? "N/A"}</td>
           </tr>
         ))}

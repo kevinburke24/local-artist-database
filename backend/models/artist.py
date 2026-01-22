@@ -7,6 +7,7 @@ class Artist(Base):
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(10), nullable=False)
+    stage_name = Column(String(10), nullable=False)
     zip_code = Column(String(10), nullable=False)
     genre = Column(String(50), nullable=False)
     monthly_listeners = Column(Integer)
