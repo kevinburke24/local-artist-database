@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Index
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Index, create_engine
 from sqlalchemy.sql import func
 from backend.db.database import Base
 
@@ -6,9 +6,10 @@ class Artist(Base):
     __tablename__ = "artists"
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String(50), nullable=False)
-    last_name = Column(String(10), nullable=False)
-    stage_name = Column(String(10), nullable=False)
-    zip_code = Column(String(10), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    stage_name = Column(String(50), nullable=False)
+    zip_code = Column(String(50), nullable=False)
+    neighborhood = Column(String(50), nullable=False)
     genre = Column(String(50), nullable=False)
     monthly_listeners = Column(Integer)
     spotify_url = Column(Text)

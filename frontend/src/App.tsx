@@ -11,8 +11,10 @@ interface Artist {
   id: number;
   first_name: string;
   last_name: string;
+  artist_name: string;
   genre: string;
   zip_code: string;
+  neighborhood: string;
   monthly_listeners: number | null;
 }
 
