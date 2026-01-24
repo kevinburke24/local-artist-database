@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Index, create_engine
+from sqlalchemy import Column, Integer, DOUBLE_PRECISION, String, Text, TIMESTAMP, Index, create_engine
 from sqlalchemy.sql import func
 from backend.db.database import Base
 
@@ -9,6 +9,8 @@ class Artist(Base):
     last_name = Column(String(50), nullable=False)
     stage_name = Column(String(50), nullable=False)
     zip_code = Column(String(50), nullable=False)
+    latitude = Column(DOUBLE_PRECISION)
+    longitude = Column(DOUBLE_PRECISION)
     neighborhood = Column(String(50), nullable=False)
     genre = Column(String(50), nullable=False)
     monthly_listeners = Column(Integer)

@@ -17,7 +17,6 @@ class ArtistBase(BaseModel):
 class ArtistCreate(ArtistBase):
     pass
 
-
 class ArtistResponse(ArtistBase):
     id: int
     created_at: datetime
