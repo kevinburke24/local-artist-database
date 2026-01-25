@@ -3,6 +3,7 @@ from slowapi.util import get_remote_address
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from pathlib import Path
 from backend.db.database import SessionLocal
 from backend.models.artist import Artist
 from backend.models.search_log import SearchLog
@@ -11,6 +12,9 @@ from backend.schemas.pagination import ArtistListResponse
 from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
 import math
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+CSV_PATH = BASE_DIR / "data" / "uszips.csv"
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
 
@@ -94,11 +98,11 @@ def query_artists_within_radius(lat0, lon0, radius_miles, db):
             Artist.latitude.between(lat_min, lat_max),
             Artist.longitude.between(lon_min, lon_max),
             # true radius filter
-            dist_expr <= radius_miles,
+            dist_expr <= radius_miles
         )
         .order_by(dist_expr.asc())
     )
-    return q.all()
+    return q
 
 import csv
 from functools import lru_cache
@@ -154,7 +158,7 @@ def get_lat_lon_from_zip(zip_code: str, csv_path: str) -> Tuple[float, float]:
     """
     z = zip_code.strip()[:5]
 
-    if len(z) != 5 or not z.isdigit():
+    if len(z) != 5:
         raise ValueError(f"Invalid ZIP code: {zip_code}")
 
     zip_map = _load_zip_lat_lon_map(csv_path)
@@ -163,7 +167,6 @@ def get_lat_lon_from_zip(zip_code: str, csv_path: str) -> Tuple[float, float]:
         return zip_map[z]
     except KeyError:
         raise ZipNotFoundError(f"ZIP code not found: {z}")
-
 
 @router.get("", response_model=ArtistListResponse)
 @limiter.limit("10/second")
@@ -203,13 +206,17 @@ def list_artists(
     query = db.query(Artist)
 
     try:
-        if zip and radius:
+        
+        if zip:
             try:
-                lat, lon = get_lat_lon_from_zip(zip,"backend/data/uszips.csv")
-            except ZipNotFoundError:
-                return {"error": "Unknown ZIP code"}, 400
+                lat, lon = get_lat_lon_from_zip(zip,CSV_PATH)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
             query = query_artists_within_radius(lat, lon, radius, db)
-
+        
+        if neighborhood:
+            query = query.filter(Artist.neighborhood.ilike(f"%{neighborhood}%"))
+        
         if genre:
             query = query.filter(Artist.genre == genre)
 
@@ -218,7 +225,7 @@ def list_artists(
 
         if last_name:
             query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
-        
+
         if stage_name:
             query = query.filter(Artist.stage_name.ilike(f"%{stage_name}%"))
 
@@ -229,7 +236,8 @@ def list_artists(
             query = query.filter(Artist.monthly_listeners <= max_listeners)
 
     except Exception as e:
-        return error("Failed to fetch artists")
+        return { "Exception" : e}
+        #raise HTTPException(status_code=400, detail="failed to retrieve artists")
 
     # adding sorting logic
 
@@ -251,21 +259,23 @@ def list_artists(
 
     # pagination
     skip = (page-1) * limit
-    query = [
+    total = query.count()
+    artists = query.offset(skip).limit(limit)
+    artists = [
         {
             "id" : artist.id,
-            "name" : artist.name,
-            "artist name" : artist.artist_name,
+            "first_name" : artist.first_name,
+            "last_name" : artist.last_name,
+            "stage_name" : artist.stage_name,
             "genre" : artist.genre,
-            "zip" : artist.zip,
+            "zip_code" : artist.zip_code,
             "neighborhood" : artist.neighborhood,
-            "monthly listeners" : artist.monthly_listeners,
-            "distance" : distance
+            "monthly_listeners" : artist.monthly_listeners,
+            "created_at" : artist.created_at,
+            "distance" : "{:.2f}".format(distance)
         }
-        for artist,distance in artists
+        for artist, distance in artists
     ]
-    artists = query.offset(skip).limit(limit).all()
-    total = query.count()
 
     return {
         "total" : total,

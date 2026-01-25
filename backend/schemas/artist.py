@@ -19,8 +19,9 @@ class ArtistCreate(ArtistBase):
 
 class ArtistResponse(ArtistBase):
     id: int
+    distance: str
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
 
     class Config:
         orm_mode = True

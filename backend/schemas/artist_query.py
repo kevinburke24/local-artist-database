@@ -1,14 +1,15 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional
 
-VALID_GENRES = {"indie", "rock", "pop", "soul", "country", "hiphop"}
+VALID_GENRES = {"indie", "rock", "pop", "soul", "country", "hiphop", "folk"}
 
 class ArtistQueryParams(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     stage_name: Optional[str] = None
     genre: Optional[str] = None
-    zip_code: Optional[str] = Field(None, pattern=r"^\d{5}$")
+    zip_code: str = Field(..., pattern=r"^\d{5}$")
+    radius: int = Field(10, ge=1, le=200)
     neighborhood: Optional[str] = None
     min_listeners: Optional[int] = Field(None, ge=0)
     max_listeners: Optional[int] = Field(None, ge=0)

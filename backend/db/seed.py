@@ -5,12 +5,12 @@ if not inspector.has_table("artists"):
     create_schema()
 
 artists = [
-    Artist(first_name="Elizabeth", last_name="Grant", stage_name="Lana Del Rey", zip_code="75460", neighborhood="N/A", genre="Pop", monthly_listeners=30000000),
-    Artist(first_name="Jack", last_name="Antonoff", stage_name="Jack Antonoff", zip_code="90210", neighborhood="Beverly Hills", genre="Indie Pop", monthly_listeners=5000000),
-    Artist(first_name="Phoebe", last_name="Bridgers", stage_name="Phoebe Bridgers", zip_code="90026", neighborhood="Silver Lake", genre="Indie Folk", monthly_listeners=8000000),
-    Artist(first_name="Thom", last_name="Yorke", stage_name="Thom Yorke", zip_code="EC2M", neighborhood="Oxford", genre="Rock", monthly_listeners=20000000),
-    Artist(first_name="Taylor", last_name="Swift", stage_name="Taylor Swift", zip_code="32054", neighborhood="East Nashville", genre="Pop", monthly_listeners=100000000),
-    Artist(first_name="Morgan", last_name="Wallen", stage_name="Morgan Wallen", zip_code="49392", neighborhood="The Gulch", genre="Country", monthly_listeners=50000000)
+    Artist(first_name="Melanie", last_name="Star", stage_name="Mel Star", zip_code="02215", latitude=42.34223, longitude=-71.08749, neighborhood="N/A", genre="Folk", monthly_listeners=0, spotify_url="", youtube_url="", bio=""),
+    Artist(first_name="Thomas", last_name="Baxley", stage_name="Trace Baxley", zip_code="02134", latitude=42.35765, longitude=-71.12889, neighborhood="Allston", genre="Indie Pop", monthly_listeners=0, spotify_url="", youtube_url="", bio=""),
+    Artist(first_name="Nick", last_name="Prato", stage_name="Nick Prato", zip_code="02145", latitude=42.39135, longitude=-71.09267, neighborhood="Somerville", genre="Indie Rock", monthly_listeners=0, spotify_url="", youtube_url="", bio=""),
+    Artist(first_name="Jared", last_name="Hahn", stage_name="Jared Hahn", zip_code="02145",  latitude=42.39144, longitude=-71.09269, neighborhood="Somerville", genre="Rock", monthly_listeners=0, spotify_url="", youtube_url="", bio=""),
+    Artist(first_name="Andrew", last_name="Choi", stage_name="Iasu", zip_code="02140", latitude=42.39325, longitude=-71.13454, neighborhood="Alewife", genre="Neo-Soul", monthly_listeners=0, spotify_url="", youtube_url="", bio=""),
+    Artist(first_name="Cooper", last_name="Smithson", stage_name="Cooper Smithson", zip_code="02139",latitude=42.3647, longitude=-71.1025, neighborhood="Cambridgeport", genre="Folk", monthly_listeners=0, spotify_url="", youtube_url="", bio="")
 ]
 
 db = SessionLocal()
