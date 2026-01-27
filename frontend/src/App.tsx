@@ -32,10 +32,10 @@ function App() {
   const [limit] = useState(20);
   const [total, setTotal] = useState(0);
   const [name, setName] = useState("");
-  const [stage_name, setStageName] = useState("");
+  //const [stage_name, setStageName] = useState("");
   const [genre, setGenre] = useState("");
   const [filter_zip, setZip] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
+  //const [neighborhood, setNeighborhood] = useState("");
   const [minListeners, setMinListeners] = useState("");
   const [maxListeners, setMaxListeners] = useState("");
 
@@ -56,9 +56,7 @@ function App() {
         radius : search.radius,
         filter_zip,
         name,
-        stage_name,
         genre,
-        neighborhood,
         min_listeners: minListeners ? Number(minListeners) : undefined,
         max_listeners: maxListeners ? Number(maxListeners) : undefined,
         page,

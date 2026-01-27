@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchArtist } from "./api";
+//import { fetchArtist } from "./api";
 import SkeletonCard from "./components/SkeletonCard";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Artist {
   id: number;
@@ -27,7 +29,7 @@ function ArtistDetail() {
       setLoading(true);
 
       try {
-        const res = await fetch(`http://localhost:8000/artists/${id}`);
+        const res = await fetch(`${API_URL}/artists/${id}`);
         const data = await res.json();
         setArtist(data);
       } catch {
