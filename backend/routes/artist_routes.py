@@ -181,7 +181,8 @@ def list_artists(
     last_name = params.last_name
     stage_name = params.stage_name
     genre = params.genre
-    zip = params.zip_code
+    origin_zip = params.origin_zip
+    filter_zip = params.filter_zip
     radius = params.radius
     neighborhood = params.neighborhood
     min_listeners = params.min_listeners
@@ -194,7 +195,7 @@ def list_artists(
         last_name=last_name,
         stage_name=stage_name,
         genre=genre,
-        zip_code=zip,
+        zip_code=origin_zip,
         neighborhood=neighborhood,
         min_listeners=min_listeners,
         max_listeners=max_listeners,
@@ -206,19 +207,22 @@ def list_artists(
     query = db.query(Artist)
 
     try:
-        
-        if zip:
-            try:
-                lat, lon = get_lat_lon_from_zip(zip,CSV_PATH)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
-            query = query_artists_within_radius(lat, lon, radius, db)
+        if not origin_zip:
+            raise HTTPException(400, detail="origin_zip is required")
+        try:
+            lat, lon = get_lat_lon_from_zip(origin_zip,CSV_PATH)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        query = query_artists_within_radius(lat, lon, radius, db)
+
+        if filter_zip:
+            query = query.filter(Artist.zip_code == filter_zip)
         
         if neighborhood:
             query = query.filter(Artist.neighborhood.ilike(f"%{neighborhood}%"))
         
         if genre:
-            query = query.filter(Artist.genre == genre)
+            query = query.filter(Artist.genre.ilike(f"%{genre}%"))
 
         if first_name:
             query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))

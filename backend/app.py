@@ -13,17 +13,14 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 ALLOWED_ORIGINS = [
     "https://localhost:5173",
-    "https://local-artist-database.vercel.app"
+    "http://localhost:5173",
+    "https://local-artist-database.vercel.app",
+    "http://local-artist-database.vercel.app"
 ]
 
 app = FastAPI()
 app.state.limiter=limiter
 app.add_exception_handler(RateLimitExceeded, ...)
-
-Base.metadata.create_all(bind=engine)
-
-app.include_router(artist_router)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -31,6 +28,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Base.metadata.create_all(bind=engine)
+
+app.include_router(artist_router)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

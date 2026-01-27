@@ -8,7 +8,8 @@ class ArtistQueryParams(BaseModel):
     last_name: Optional[str] = None
     stage_name: Optional[str] = None
     genre: Optional[str] = None
-    zip_code: str = Field(..., pattern=r"^\d{5}$")
+    origin_zip: str = Field(..., pattern=r"^\d{5}$")
+    filter_zip: Optional[str] = None
     radius: int = Field(10, ge=1, le=200)
     neighborhood: Optional[str] = None
     min_listeners: Optional[int] = Field(None, ge=0)

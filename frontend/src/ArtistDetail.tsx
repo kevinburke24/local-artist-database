@@ -27,13 +27,11 @@ function ArtistDetail() {
       setLoading(true);
 
       try {
-        const data = await fetchArtist(id);
+        const res = await fetch(`http://localhost:8000/artists/${id}`);
+        const data = await res.json();
         setArtist(data);
-        //const res = await fetch(`http://localhost:8000/artists/${id}`);
-        //const data = await res.json();
-      setArtist(data);
       } catch {
-        setError(`Artist not found ${typeof id}`);
+        setError(`Artist not found`);
       }
       setLoading(false);
   }

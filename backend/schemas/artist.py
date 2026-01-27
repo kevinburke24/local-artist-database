@@ -6,7 +6,7 @@ class ArtistBase(BaseModel):
     first_name: str
     last_name: str
     stage_name: str
-    zip_code: str
+    zip_code : str
     neighborhood: str
     genre: str
     monthly_listeners: Optional[int] = None
@@ -19,7 +19,7 @@ class ArtistCreate(ArtistBase):
 
 class ArtistResponse(ArtistBase):
     id: int
-    distance: str
+    distance: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
