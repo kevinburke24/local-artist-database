@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DATABASE_URL = os.getenv("RAILWAY_DATABASE_URL")
+DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 

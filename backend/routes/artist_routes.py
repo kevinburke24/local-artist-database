@@ -274,6 +274,7 @@ def list_artists(
             "genre" : artist.genre,
             "zip_code" : artist.zip_code,
             "neighborhood" : artist.neighborhood,
+            "spotify_url" : artist.spotify_url,
             "monthly_listeners" : artist.monthly_listeners,
             "created_at" : artist.created_at,
             "distance" : "{:.2f}".format(distance)

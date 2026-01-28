@@ -6,6 +6,7 @@ import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
 import PageLayout from "./components/PageLayout"
 import SkeletonTable from "./components/SkeletonTable";
+import spotifyLogo from "./assets/images/spotify.svg";
 
 interface Artist {
   id: number;
@@ -16,6 +17,7 @@ interface Artist {
   zip_code: string;
   neighborhood: string;
   monthly_listeners: number | null;
+  spotify_url: string;
   distance : string;
 }
 
@@ -129,6 +131,7 @@ function App() {
         path = "/"
         element={
           <div style={{ padding: "20px" }}>
+              <img src={spotifyLogo} alt="Spotify test" width={32} height={32} />
           <h1>Local Artist Database</h1>
           <PageLayout>
             <div style={{ marginBottom: "15px", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px" }}>
