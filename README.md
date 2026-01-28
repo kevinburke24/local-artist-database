@@ -12,6 +12,10 @@ https://local-artist-db-production.up.railway.app
 API Docs:  
 https://local-artist-db-production.up.railway.app/docs  
 
+## How to use
+
+* At the moment, please only enter a Boston/Cambridge/Somverville zip code if you want to see results.
+
 ## Tech Stack
 
 * Backend: FastAPI, SQLAlchemy, PostgreSQL  
