@@ -6,11 +6,14 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 from backend.db.database import SessionLocal
 from backend.models.artist import Artist
+from backend.models.artist_submission import ArtistSubmission, SubmissionStatus
 from backend.models.search_log import SearchLog
 from backend.schemas.artist import ArtistCreate, ArtistResponse
+from backend.schemas.artist_submission import ArtistSubmissionCreate
 from backend.schemas.pagination import ArtistListResponse
 from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
+from backend.utils.rate_limit import too_many_recent_submissions
 import math
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -288,3 +291,43 @@ def list_artists(
         "limit" : limit,
         "artists" : artists
     }
+
+@router.post("/artist-submissions")
+def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, db: Session = Depends(get_db)):
+    # 1) Honeypot: if filled, treat as spam but "pretend success"
+    if payload.company and payload.company.strip():
+        return {"ok": True}  # don't signal to bots
+
+    # 2) Basic "proof link" requirement (choose your rule)
+    if not (payload.spotify_url or payload.youtube_url):
+        raise HTTPException(status_code=400, detail="Please include at least one valid link.")
+
+    # 3) Rate limiting by IP
+    ip = request.client.host if request.client else None
+    if ip and too_many_recent_submissions(db, ip):
+        raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
+
+    ua = request.headers.get("user-agent", "")[:256]
+
+    sub = ArtistSubmission(
+        status=SubmissionStatus.pending,
+        submitter_ip=ip,
+        user_agent=ua,
+        honeypot=payload.company,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        stage_name=payload.stage_name.strip(),
+        email=str(payload.email).strip().lower(),
+        zip_code=payload.zip_code,
+        genre=payload.genre.strip() if payload.genre else None,
+        spotify_url=payload.spotify_url,
+        youtube_url=payload.youtube_url,
+        neighborhood=payload.neighborhood,
+        bio=payload.bio.strip() if payload.bio else None,
+    )
+
+    db.add(sub)
+    db.commit()
+    db.refresh(sub)
+
+    return {"ok": True, "submission_id": sub.id}

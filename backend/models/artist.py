@@ -11,7 +11,7 @@ class Artist(Base):
     zip_code = Column(String(5), nullable=False)
     latitude = Column(DOUBLE_PRECISION)
     longitude = Column(DOUBLE_PRECISION)
-    neighborhood = Column(String(50), nullable=False)
+    neighborhood = Column(String(50), nullable=True)
     genre = Column(String(50), nullable=False)
     monthly_listeners = Column(Integer)
     spotify_url = Column(Text)

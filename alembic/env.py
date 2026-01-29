@@ -1,5 +1,6 @@
 from logging.config import fileConfig
-from backend.models.artist import Artist, Base
+from backend.models.artist import Base
+from backend.models.artist_submission import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
