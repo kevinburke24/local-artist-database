@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlalchemy
 psycopg2-binary
 pydantic
+pydantic[email]
 python-multipart
 slowapi
 python-dotenv
