@@ -22,4 +22,3 @@ class ArtistQueryParams(BaseModel):
         if v and v.lower() not in VALID_GENRES:
             raise ValueError("Invalid genre")
         return v
-    

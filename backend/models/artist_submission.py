@@ -3,6 +3,7 @@ from sqlalchemy import (
     Column, Integer, String, DateTime, Text, Enum, func, TIMESTAMP
 )
 from backend.db.database import Base  # adjust import to your Base
+from sqlalchemy import DateTime
 
 class SubmissionStatus(str, enum.Enum):
     pending = "pending"
@@ -32,6 +33,9 @@ class ArtistSubmission(Base):
     neighborhood = Column(String(50), nullable=True)
     genre = Column(String(80), nullable=False)
     bio = Column(Text, nullable=True)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    verify_token_hash = Column(String(128), nullable=False)
+    verify_token_expires_at = Column(DateTime(timezone=True), nullable=False)
 
     spotify_url = Column(Text, nullable=True)
     youtube_url = Column(Text, nullable=True)

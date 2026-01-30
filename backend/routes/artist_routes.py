@@ -3,6 +3,7 @@ from slowapi.util import get_remote_address
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from backend.db.database import SessionLocal
 from backend.models.artist import Artist
@@ -14,6 +15,7 @@ from backend.schemas.pagination import ArtistListResponse
 from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
 from backend.utils.rate_limit import too_many_recent_submissions
+from backend.utils.tokens import generate_token, hash_token
 import math
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -306,6 +308,10 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     ip = request.client.host if request.client else None
     if ip and too_many_recent_submissions(db, ip):
         raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
+    
+    # 4) get authentication tokens
+
+    raw_token, token_hash = generate_token()
 
     ua = request.headers.get("user-agent", "")[:256]
 
@@ -324,6 +330,8 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
         youtube_url=payload.youtube_url,
         neighborhood=payload.neighborhood,
         bio=payload.bio.strip() if payload.bio else None,
+        verify_token_hash=token_hash,
+        verify_token_expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
     )
 
     db.add(sub)
@@ -331,3 +339,26 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     db.refresh(sub)
 
     return {"ok": True, "submission_id": sub.id}
+
+@router.get("/artist-submissions/verify")
+def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
+    token_hash = hash_token(token)
+
+    sub = (
+        db.query(ArtistSubmission)
+        .filter(ArtistSubmission.verify_token_hash == token_hash)
+        .first()
+    )
+    if not sub:
+        raise HTTPException(400, detail="Invalid verification link")
+
+    if sub.email_verified_at is not None:
+        return {"ok": True, "message": "Already verified"}
+
+    if sub.verify_token_expires_at < datetime.now(timezone.utc):
+        raise HTTPException(400, detail="Verification link expired")
+
+    sub.email_verified_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {"ok": True, "message": "Email verified"}
