@@ -71,3 +71,6 @@ class ArtistSubmissionCreate(BaseModel):
     @classmethod
     def strip_url(cls, v: Optional[str]):
         return v.strip() if v else v
+
+class RejectBody(BaseModel):
+    reason: Optional[str] = None

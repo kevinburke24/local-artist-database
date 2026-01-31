@@ -7,8 +7,8 @@ class ArtistBase(BaseModel):
     last_name: str
     stage_name: str
     zip_code : str
-    neighborhood: str
     genre: str
+    neighborhood: Optional[str] = None
     monthly_listeners: Optional[int] = None
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None

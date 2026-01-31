@@ -36,6 +36,9 @@ class ArtistSubmission(Base):
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
     verify_token_hash = Column(String(128), nullable=False)
     verify_token_expires_at = Column(DateTime(timezone=True), nullable=False)
+    approved_artist_id = Column(Integer, nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    review_notes = Column(Text, nullable=True)
 
     spotify_url = Column(Text, nullable=True)
     youtube_url = Column(Text, nullable=True)

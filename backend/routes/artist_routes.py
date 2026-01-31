@@ -10,7 +10,7 @@ from backend.models.artist import Artist
 from backend.models.artist_submission import ArtistSubmission, SubmissionStatus
 from backend.models.search_log import SearchLog
 from backend.schemas.artist import ArtistCreate, ArtistResponse
-from backend.schemas.artist_submission import ArtistSubmissionCreate
+from backend.schemas.artist_submission import ArtistSubmissionCreate, RejectBody
 from backend.schemas.pagination import ArtistListResponse
 from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
@@ -21,7 +21,7 @@ import math
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
 
-router = APIRouter(prefix="/artists", tags=["Artists"])
+router = APIRouter(tags=["Artists"], prefix="/artists")
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -308,7 +308,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     ip = request.client.host if request.client else None
     if ip and too_many_recent_submissions(db, ip):
         raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
-    
+
     # 4) get authentication tokens
 
     raw_token, token_hash = generate_token()
@@ -362,3 +362,96 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
     db.commit()
 
     return {"ok": True, "message": "Email verified"}
+
+import os
+from fastapi import Header, HTTPException
+
+def require_admin(x_admin_token: str = Header(default="")):
+    expected = os.getenv("ADMIN_TOKEN", "")
+    print(expected)
+    if not expected or x_admin_token != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+@router.get("/admin/artist-submissions", dependencies=[Depends(require_admin)])
+def list_submissions(db: Session = Depends(get_db), status: str = "pending"):
+    q = db.query(ArtistSubmission)
+
+    if status == "pending":
+        q = q.filter(ArtistSubmission.status == SubmissionStatus.pending)
+    elif status == "approved":
+        q = q.filter(ArtistSubmission.status == SubmissionStatus.approved)
+    elif status == "rejected":
+        q = q.filter(ArtistSubmission.status == SubmissionStatus.rejected)
+
+    # Only show verified submissions in the default pending view
+    if status == "pending":
+        q = q.filter(ArtistSubmission.email_verified_at.isnot(None))
+
+    rows = q.order_by(ArtistSubmission.created_at.desc()).limit(200).all()
+    return [{"id": r.id, "stage_name": r.stage_name, "email": r.email, "created_at": r.created_at} for r in rows]
+
+def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
+    lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
+    return {
+        "first_name": sub.first_name.strip(),
+        "last_name" : sub.last_name.strip(),
+        "stage_name" : sub.stage_name.strip(),
+        "zip_code": sub.zip_code,
+        "genre": sub.genre,
+        "spotify_url": sub.spotify_url,
+        "youtube_url": sub.youtube_url,
+        "latitude" : lat,
+        "longitude" : lon,
+        "neighborhood" : sub.neighborhood,
+        "monthly_listeners" : 0,
+        "bio" : sub.bio
+    }
+
+@router.post("/admin/artist-submissions/{submission_id}/approve", dependencies=[Depends(require_admin)])
+def approve_submission(submission_id: int, db: Session = Depends(get_db)):
+    sub = db.query(ArtistSubmission).filter(ArtistSubmission.id == submission_id).first()
+    if not sub:
+        raise HTTPException(404, detail="Submission not found")
+
+    if sub.email_verified_at is None:
+        raise HTTPException(400, detail="Submission email not verified")
+
+    if sub.status != SubmissionStatus.pending:
+        raise HTTPException(400, detail=f"Submission is {sub.status}, cannot approve")
+
+    # create artist
+    artist = Artist(**artist_kwargs_from_submission(sub))  # import your Artist model
+    db.add(artist)
+    db.flush()  # assigns artist.id without committing yet
+
+    # mark submission approved
+    sub.status = SubmissionStatus.approved
+    sub.reviewed_at = datetime.now(timezone.utc)
+    sub.approved_artist_id = artist.id
+
+    db.commit()
+    return {"ok": True, "artist_id": artist.id}
+
+from pydantic import BaseModel
+from typing import Optional
+
+class RejectBody(BaseModel):
+    reason: Optional[str] = None
+
+@router.post("/admin/artist-submissions/{submission_id}/reject", dependencies=[Depends(require_admin)])
+def reject_submission(submission_id: int, body: RejectBody, db: Session = Depends(get_db)):
+    sub = db.query(ArtistSubmission).filter(ArtistSubmission.id == submission_id).first()
+    if not sub:
+        raise HTTPException(404, detail="Submission not found")
+
+    if sub.status != SubmissionStatus.pending:
+        raise HTTPException(400, detail=f"Submission is {sub.status}, cannot reject")
+
+    sub.status = SubmissionStatus.rejected
+    sub.reviewed_at = datetime.now(timezone.utc)
+    sub.review_notes = body.reason
+
+    db.commit()
+    return {"ok": True}
+
+
