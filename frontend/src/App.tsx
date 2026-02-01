@@ -6,7 +6,6 @@ import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
 import PageLayout from "./components/PageLayout"
 import SkeletonTable from "./components/SkeletonTable";
-import spotifyLogo from "./assets/images/spotify.svg";
 
 interface Artist {
   id: number;
