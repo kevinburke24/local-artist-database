@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchArtists } from "./api";
-import { Routes, Route } from "react-router-dom";
+import { fetchArtists } from "./api/fetchArtists";
+import { Routes, Route, Link } from "react-router-dom";
 import ArtistDetail from "./ArtistDetail";
 import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
 import PageLayout from "./components/PageLayout"
 import SkeletonTable from "./components/SkeletonTable";
+import AddYourself from "./components/AddYourself";
 
 interface Artist {
   id: number;
@@ -50,7 +51,7 @@ function App() {
       return;
     }
     setError("");
-    setLoading(true)
+    setLoading(true);
     try {
       const data = await fetchArtists({
         origin_zip : search.zip,
@@ -82,9 +83,12 @@ function App() {
   
   if (!search) {
     return (
+      <Routes>
+        <Route
+        path = "/"
+        element={
       <div style={{ maxWidth: 520, margin: "40px auto", padding: 16 }}>
         <h2>Find artists near you</h2>
-
         <label style={{ display: "block", marginTop: 12 }}>
           ZIP code
           <input
@@ -121,7 +125,14 @@ function App() {
         >
           Search
         </button>
+        <label style={{ display: "block", marginTop: 12 }}>
+          <a href="/add-yourself">Add yourself</a>
+        </label>
       </div>
+      }
+      />
+          <Route path="/add-yourself" element={<AddYourself />} />
+      </Routes>
     );
   }
   return (
@@ -130,22 +141,29 @@ function App() {
         path = "/"
         element={
           <div style={{ padding: "20px" }}>
-          <h1>Local Artist Database</h1>
-          <PageLayout>
-            <div style={{ marginBottom: "15px", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px" }}>
-              <h2 style={{ margin: 0 }}>
-                Displaying artists within {search.radius} miles of {search.zip}
-             </h2>
-
             <button
               onClick={() => {
                 setSearch(null);   // go back to ZIP/radius screen
                 setArtists([]);
                 setPage(1);
               }}
+            style={{
+              marginBottom: "20px",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              background: "#f2f2f2",
+              border: "1px solid #ccc",
+              cursor: "pointer"
+            }}
             >
-              Change search
-            </button>
+            Change Search
+          </button>
+          <h1>Local Artist Database</h1>
+          <PageLayout>
+            <div style={{ marginBottom: "15px", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px" }}>
+              <h2 style={{ margin: 0 }}>
+                Displaying artists within {search.radius} miles of {search.zip}
+             </h2>
         </div>
           <ArtistFilters
             name={name} setName={setName}
@@ -159,6 +177,8 @@ function App() {
           {loading && <SkeletonTable/>}
           {error && <div style={{ color : "red" }}>{error}</div>}
           {!loading && <ArtistTable artists={artists} />}
+          <div style={{ marginTop: 20 }}></div>
+          <a href="/add-yourself">Add yourself</a>
           {!loading && artists.length === 0 && <div>No results found.</div>}
           {/* PAGINATION */}
           <div style={{ marginTop: 20 }}>

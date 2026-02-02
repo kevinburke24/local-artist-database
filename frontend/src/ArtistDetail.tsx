@@ -53,7 +53,7 @@ function ArtistDetail() {
         background: "#f2f2f2",
         border: "1px solid #ccc",
         cursor: "pointer"
-      }}  
+      }}
     >
       ← Back to results
     </button>
