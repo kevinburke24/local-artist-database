@@ -222,10 +222,10 @@ def list_artists(
 
         if filter_zip:
             query = query.filter(Artist.zip_code == filter_zip)
-        
+
         if neighborhood:
             query = query.filter(Artist.neighborhood.ilike(f"%{neighborhood}%"))
-        
+
         if genre:
             query = query.filter(Artist.genre.ilike(f"%{genre}%"))
 
@@ -301,7 +301,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
         return {"ok": True}  # don't signal to bots
 
     # 2) Basic "proof link" requirement (choose your rule)
-    if not (payload.spotify_url or payload.youtube_url):
+    if not (payload.spotify_url or payload.youtube_url or payload.soundcloud_url):
         raise HTTPException(status_code=400, detail="Please include at least one valid link.")
 
     # 3) Rate limiting by IP
@@ -328,6 +328,8 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
         genre=payload.genre.strip() if payload.genre else None,
         spotify_url=payload.spotify_url,
         youtube_url=payload.youtube_url,
+        instagram_url=payload.instagram_url,
+        soundcloud_url = payload.soundcloud_url,
         neighborhood=payload.neighborhood,
         bio=payload.bio.strip() if payload.bio else None,
         verify_token_hash=token_hash,
@@ -400,6 +402,7 @@ def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
         "genre": sub.genre,
         "spotify_url": sub.spotify_url,
         "youtube_url": sub.youtube_url,
+        "instagram_url": sub.instagram_url,
         "latitude" : lat,
         "longitude" : lon,
         "neighborhood" : sub.neighborhood,

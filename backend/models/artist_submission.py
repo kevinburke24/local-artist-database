@@ -42,3 +42,5 @@ class ArtistSubmission(Base):
 
     spotify_url = Column(Text, nullable=True)
     youtube_url = Column(Text, nullable=True)
+    instagram_url = Column(Text, nullable=True)
+    soundcloud_url = Column(Text, nullable=True)

@@ -12,6 +12,8 @@ class ArtistBase(BaseModel):
     monthly_listeners: Optional[int] = None
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None
+    soundcloud_url: Optional[str] = None
+    instagram_url: Optional[str] = None
     bio: Optional[str] = None
 
 class ArtistCreate(ArtistBase):

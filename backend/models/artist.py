@@ -16,6 +16,8 @@ class Artist(Base):
     monthly_listeners = Column(Integer)
     spotify_url = Column(Text)
     youtube_url = Column(Text)
+    soundcloud_url = Column(Text)
+    instagram_url = Column(Text)
     bio = Column(Text)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.now())
