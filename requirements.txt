@@ -7,3 +7,4 @@ pydantic[email]
 python-multipart
 slowapi
 python-dotenv
+resend
