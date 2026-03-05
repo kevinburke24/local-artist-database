@@ -27,6 +27,8 @@ class ArtistSubmissionCreate(BaseModel):
 
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    soundcloud_url: Optional[str] = None
 
     bio: Optional[str] = Field(default=None, max_length=2000)
 
@@ -46,7 +48,7 @@ class ArtistSubmissionCreate(BaseModel):
             return s[:5]
         raise ValueError("zip_code must start with 5 digits")
 
-    @field_validator("spotify_url", "youtube_url")
+    @field_validator("spotify_url", "youtube_url", "instagram_url", "soundcloud_url")
     @classmethod
     def validate_urls(cls, v: Optional[str]):
         if v is None or v.strip() == "":
@@ -67,7 +69,7 @@ class ArtistSubmissionCreate(BaseModel):
             return v
         return v
 
-    @field_validator("spotify_url", "youtube_url")
+    @field_validator("spotify_url", "youtube_url", "instagram_url", "soundcloud_url")
     @classmethod
     def strip_url(cls, v: Optional[str]):
         return v.strip() if v else v

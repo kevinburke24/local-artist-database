@@ -205,6 +205,7 @@ function App() {
         }
       />
       <Route path="/artists/:id" element={<ArtistDetail />} />
+      <Route path="/add-yourself" element={<AddYourself />} />
     </Routes>
   );
 }

@@ -4,14 +4,16 @@ export type ArtistSubmissionsCreate = {
     first_name: string;
     last_name: string;
     stage_name: string;
-    email:string;
+    email: string;
     zip_code: string;
+    genre: string;
     neighborhood?: string | null;
-    genre?: string | null;
     spotify_url?: string | null;
     youtube_url?: string | null;
+    instagram_url?: string | null;
+    soundcloud_url?: string | null;
     bio?: string | null;
-    
+
     // honeypot
     company?: string | null;
 };
