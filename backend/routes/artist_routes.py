@@ -1,6 +1,7 @@
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Header
+from fastapi.responses import RedirectResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
@@ -16,7 +17,14 @@ from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
 from backend.utils.rate_limit import too_many_recent_submissions
 from backend.utils.tokens import generate_token, hash_token
+from backend.utils.email import send_verification_email
+import csv
 import math
+import os
+from functools import lru_cache
+from typing import Tuple
+from pydantic import BaseModel
+from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
@@ -68,27 +76,6 @@ def bounding_box(lat0, lon0, radius_miles):
     lon_delta = radius_miles / (69.0 * math.cos(math.radians(lat0)))
     return (lat0 - lat_delta, lat0 + lat_delta, lon0 - lon_delta, lon0 + lon_delta)
 
-EARTH_RADIUS_MI = 3959.0
-
-def miles_distance_expr(lat0, lon0, lat_col, lon_col):
-    """
-    Returns a SQLAlchemy expression that computes distance (miles) between
-    point (lat0, lon0) and columns (lat_col, lon_col) using Haversine-ish acos formula.
-    """
-    return EARTH_RADIUS_MI * func.acos(
-        func.cos(func.radians(lat0)) *
-        func.cos(func.radians(lat_col)) *
-        func.cos(func.radians(lon_col) - func.radians(lon0)) +
-        func.sin(func.radians(lat0)) *
-        func.sin(func.radians(lat_col))
-    )
-
-def bounding_box(lat0, lon0, radius_miles):
-    # Rough but good enough for prefiltering
-    lat_delta = radius_miles / 69.0
-    lon_delta = radius_miles / (69.0 * math.cos(math.radians(lat0)))
-    return (lat0 - lat_delta, lat0 + lat_delta, lon0 - lon_delta, lon0 + lon_delta)
-
 def query_artists_within_radius(lat0, lon0, radius_miles, db):
     dist_expr = miles_distance_expr(lat0, lon0, Artist.latitude, Artist.longitude).label("distance_miles")
 
@@ -99,20 +86,13 @@ def query_artists_within_radius(lat0, lon0, radius_miles, db):
         .filter(
             Artist.latitude.isnot(None),
             Artist.longitude.isnot(None),
-            # bounding box prefilter (optional but recommended)
             Artist.latitude.between(lat_min, lat_max),
             Artist.longitude.between(lon_min, lon_max),
-            # true radius filter
             dist_expr <= radius_miles
         )
         .order_by(dist_expr.asc())
     )
     return q
-
-import csv
-from functools import lru_cache
-from pathlib import Path
-from typing import Tuple
 
 class ZipNotFoundError(Exception):
     pass
@@ -148,7 +128,6 @@ def _load_zip_lat_lon_map(csv_path: str) -> dict[str, tuple[float, float]]:
                 try:
                     zip_map[z] = (float(row[lat_h]), float(row[lon_h]))
                 except ValueError:
-                    # skip malformed rows
                     continue
 
     if not zip_map:
@@ -215,7 +194,7 @@ def list_artists(
         if not origin_zip:
             raise HTTPException(400, detail="origin_zip is required")
         try:
-            lat, lon = get_lat_lon_from_zip(origin_zip,CSV_PATH)
+            lat, lon = get_lat_lon_from_zip(origin_zip, CSV_PATH)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
         query = query_artists_within_radius(lat, lon, radius, db)
@@ -245,15 +224,12 @@ def list_artists(
             query = query.filter(Artist.monthly_listeners <= max_listeners)
 
     except Exception as e:
-        return { "Exception" : e}
-        #raise HTTPException(status_code=400, detail="failed to retrieve artists")
-
-    # adding sorting logic
+        return {"Exception": e}
 
     valid_sort_fields = {
-        "last_name" : Artist.last_name,
-        "monthly_listeners" : Artist.monthly_listeners,
-        "created_at" : Artist.created_at
+        "last_name": Artist.last_name,
+        "monthly_listeners": Artist.monthly_listeners,
+        "created_at": Artist.created_at
     }
 
     if sort_by not in valid_sort_fields:
@@ -266,50 +242,47 @@ def list_artists(
     else:
         query = query.order_by(sort_column.asc())
 
-    # pagination
-    skip = (page-1) * limit
+    skip = (page - 1) * limit
     total = query.count()
     artists = query.offset(skip).limit(limit)
     artists = [
         {
-            "id" : artist.id,
-            "first_name" : artist.first_name,
-            "last_name" : artist.last_name,
-            "stage_name" : artist.stage_name,
-            "genre" : artist.genre,
-            "zip_code" : artist.zip_code,
-            "neighborhood" : artist.neighborhood,
-            "spotify_url" : artist.spotify_url,
-            "monthly_listeners" : artist.monthly_listeners,
-            "created_at" : artist.created_at,
-            "distance" : "{:.2f}".format(distance)
+            "id": artist.id,
+            "first_name": artist.first_name,
+            "last_name": artist.last_name,
+            "stage_name": artist.stage_name,
+            "genre": artist.genre,
+            "zip_code": artist.zip_code,
+            "neighborhood": artist.neighborhood,
+            "spotify_url": artist.spotify_url,
+            "monthly_listeners": artist.monthly_listeners,
+            "created_at": artist.created_at,
+            "distance": "{:.2f}".format(distance)
         }
         for artist, distance in artists
     ]
 
     return {
-        "total" : total,
-        "page" : page,
-        "limit" : limit,
-        "artists" : artists
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "artists": artists
     }
 
 @router.post("/artist-submissions")
 def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, db: Session = Depends(get_db)):
     # 1) Honeypot: if filled, treat as spam but "pretend success"
     if payload.company and payload.company.strip():
-        return {"ok": True}  # don't signal to bots
+        return {"ok": True}
 
-    # 2) Basic "proof link" requirement (choose your rule)
-    if not (payload.spotify_url or payload.youtube_url or payload.soundcloud_url):
+    # 2) Basic "proof link" requirement
+    if not (payload.spotify_url or payload.youtube_url or payload.soundcloud_url or payload.instagram_url):
         raise HTTPException(status_code=400, detail="Please include at least one valid link.")
 
     # 3) Rate limiting by IP
     ip = request.client.host if request.client else None
     if ip and too_many_recent_submissions(db, ip):
         raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
-
-    # 4) get authentication tokens
 
     raw_token, token_hash = generate_token()
 
@@ -329,7 +302,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
         spotify_url=payload.spotify_url,
         youtube_url=payload.youtube_url,
         instagram_url=payload.instagram_url,
-        soundcloud_url = payload.soundcloud_url,
+        soundcloud_url=payload.soundcloud_url,
         neighborhood=payload.neighborhood,
         bio=payload.bio.strip() if payload.bio else None,
         verify_token_hash=token_hash,
@@ -340,10 +313,38 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     db.commit()
     db.refresh(sub)
 
+    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+    verify_url = f"{backend_url}/artists/artist-submissions/verify?token={raw_token}"
+    send_verification_email(
+        to_email=sub.email,
+        first_name=sub.first_name,
+        verify_url=verify_url,
+    )
+
     return {"ok": True, "submission_id": sub.id}
+
+def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
+    lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
+    return {
+        "first_name": sub.first_name.strip(),
+        "last_name": sub.last_name.strip(),
+        "stage_name": sub.stage_name.strip(),
+        "zip_code": sub.zip_code,
+        "genre": sub.genre,
+        "spotify_url": sub.spotify_url,
+        "youtube_url": sub.youtube_url,
+        "instagram_url": sub.instagram_url,
+        "soundcloud_url": sub.soundcloud_url,
+        "latitude": lat,
+        "longitude": lon,
+        "neighborhood": sub.neighborhood,
+        "monthly_listeners": 0,
+        "bio": sub.bio
+    }
 
 @router.get("/artist-submissions/verify")
 def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     token_hash = hash_token(token)
 
     sub = (
@@ -355,22 +356,27 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
         raise HTTPException(400, detail="Invalid verification link")
 
     if sub.email_verified_at is not None:
-        return {"ok": True, "message": "Already verified"}
+        return RedirectResponse(url=f"{frontend_url}?verified=already")
 
     if sub.verify_token_expires_at < datetime.now(timezone.utc):
         raise HTTPException(400, detail="Verification link expired")
 
     sub.email_verified_at = datetime.now(timezone.utc)
+
+    artist = Artist(**artist_kwargs_from_submission(sub))
+    db.add(artist)
+    db.flush()
+
+    sub.status = SubmissionStatus.approved
+    sub.reviewed_at = datetime.now(timezone.utc)
+    sub.approved_artist_id = artist.id
+
     db.commit()
 
-    return {"ok": True, "message": "Email verified"}
-
-import os
-from fastapi import Header, HTTPException
+    return RedirectResponse(url=f"{frontend_url}?verified=true")
 
 def require_admin(x_admin_token: str = Header(default="")):
     expected = os.getenv("ADMIN_TOKEN", "")
-    print(expected)
     if not expected or x_admin_token != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -385,30 +391,11 @@ def list_submissions(db: Session = Depends(get_db), status: str = "pending"):
     elif status == "rejected":
         q = q.filter(ArtistSubmission.status == SubmissionStatus.rejected)
 
-    # Only show verified submissions in the default pending view
     if status == "pending":
         q = q.filter(ArtistSubmission.email_verified_at.isnot(None))
 
     rows = q.order_by(ArtistSubmission.created_at.desc()).limit(200).all()
     return [{"id": r.id, "stage_name": r.stage_name, "email": r.email, "created_at": r.created_at} for r in rows]
-
-def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
-    lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
-    return {
-        "first_name": sub.first_name.strip(),
-        "last_name" : sub.last_name.strip(),
-        "stage_name" : sub.stage_name.strip(),
-        "zip_code": sub.zip_code,
-        "genre": sub.genre,
-        "spotify_url": sub.spotify_url,
-        "youtube_url": sub.youtube_url,
-        "instagram_url": sub.instagram_url,
-        "latitude" : lat,
-        "longitude" : lon,
-        "neighborhood" : sub.neighborhood,
-        "monthly_listeners" : 0,
-        "bio" : sub.bio
-    }
 
 @router.post("/admin/artist-submissions/{submission_id}/approve", dependencies=[Depends(require_admin)])
 def approve_submission(submission_id: int, db: Session = Depends(get_db)):
@@ -422,21 +409,16 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
     if sub.status != SubmissionStatus.pending:
         raise HTTPException(400, detail=f"Submission is {sub.status}, cannot approve")
 
-    # create artist
-    artist = Artist(**artist_kwargs_from_submission(sub))  # import your Artist model
+    artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
-    db.flush()  # assigns artist.id without committing yet
+    db.flush()
 
-    # mark submission approved
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
     sub.approved_artist_id = artist.id
 
     db.commit()
     return {"ok": True, "artist_id": artist.id}
-
-from pydantic import BaseModel
-from typing import Optional
 
 class RejectBody(BaseModel):
     reason: Optional[str] = None
@@ -456,5 +438,3 @@ def reject_submission(submission_id: int, body: RejectBody, db: Session = Depend
 
     db.commit()
     return {"ok": True}
-
-
