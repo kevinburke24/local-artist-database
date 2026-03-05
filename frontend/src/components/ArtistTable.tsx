@@ -33,53 +33,67 @@ function LinkIcon({ href, label, src }: { href?: string; label: string; src: str
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      style={{ display: "inline-flex", alignItems: "center" }}
+      className="link-icon"
     >
-      <img src={src} alt={label} width={20} height={20} />
+      <img src={src} alt={label} width={18} height={18} />
     </a>
   );
 }
 
+function formatListeners(n: number | null) {
+  if (n === null) return "—";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
 export default function ArtistTable({ artists }: Props) {
   return (
-    <table border={1} cellPadding={8} style={{ marginTop: "20px", width: "100%" }}>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Stage Name</th>
-          <th>Genre</th>
-          <th>Zip</th>
-          <th>Neighborhood</th>
-          <th>Distance</th>
-          <th>Links</th>
-          <th>Listeners</th>
-        </tr>
-      </thead>
-      <tbody>
-        {artists.map((a) => (
-          <tr key={a.id}>
-            <td>
-              <Link to={`/artists/${a.id}`}>
-                {a.first_name} {a.last_name}
-              </Link>
-            </td>
-            <td>{a.stage_name}</td>
-            <td>{a.genre}</td>
-            <td>{a.zip_code}</td>
-            <td>{a.neighborhood}</td>
-            <td>{a.distance}</td>
-            <td>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <LinkIcon href={a.spotify_url} label="Spotify" src={spotifyLogo} />
-                <LinkIcon href={a.youtube_url} label="YouTube" src={youtubeLogo} />
-                <LinkIcon href={a.instagram_url} label="Instagram" src={instagramLogo} />
-                <LinkIcon href={a.soundcloud_url} label="SoundCloud" src={soundcloudLogo} />
-              </div>
-            </td>
-            <td>{a.monthly_listeners ?? "N/A"}</td>
+    <div className="artist-table-wrap">
+      <table className="artist-table">
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>Stage Name</th>
+            <th>Genre</th>
+            <th>Location</th>
+            <th>Distance</th>
+            <th>Links</th>
+            <th>Listeners</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {artists.map((a) => (
+            <tr key={a.id}>
+              <td>
+                <Link to={`/artists/${a.id}`} className="artist-name-link">
+                  {a.first_name} {a.last_name}
+                </Link>
+              </td>
+              <td className="stage-name">{a.stage_name || "—"}</td>
+              <td>
+                {a.genre ? <span className="genre-badge">{a.genre}</span> : "—"}
+              </td>
+              <td>
+                <div>{a.neighborhood || a.zip_code}</div>
+                {a.neighborhood && (
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{a.zip_code}</div>
+                )}
+              </td>
+              <td className="distance-text">{a.distance} mi</td>
+              <td>
+                <div className="links-cell">
+                  <LinkIcon href={a.spotify_url} label="Spotify" src={spotifyLogo} />
+                  <LinkIcon href={a.youtube_url} label="YouTube" src={youtubeLogo} />
+                  <LinkIcon href={a.instagram_url} label="Instagram" src={instagramLogo} />
+                  <LinkIcon href={a.soundcloud_url} label="SoundCloud" src={soundcloudLogo} />
+                </div>
+              </td>
+              <td className="listeners-num">{formatListeners(a.monthly_listeners)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
