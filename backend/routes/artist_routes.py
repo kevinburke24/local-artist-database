@@ -22,9 +22,8 @@ import csv
 import math
 import os
 from functools import lru_cache
-from typing import Tuple
+from typing import Tuple, Optional
 from pydantic import BaseModel
-from typing import Optional
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
@@ -58,10 +57,6 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
 EARTH_RADIUS_MI = 3959.0
 
 def miles_distance_expr(lat0, lon0, lat_col, lon_col):
-    """
-    Returns a SQLAlchemy expression that computes distance (miles) between
-    point (lat0, lon0) and columns (lat_col, lon_col) using Haversine-ish acos formula.
-    """
     return EARTH_RADIUS_MI * func.acos(
         func.cos(func.radians(lat0)) *
         func.cos(func.radians(lat_col)) *
@@ -71,16 +66,13 @@ def miles_distance_expr(lat0, lon0, lat_col, lon_col):
     )
 
 def bounding_box(lat0, lon0, radius_miles):
-    # Rough but good enough for prefiltering
     lat_delta = radius_miles / 69.0
     lon_delta = radius_miles / (69.0 * math.cos(math.radians(lat0)))
     return (lat0 - lat_delta, lat0 + lat_delta, lon0 - lon_delta, lon0 + lon_delta)
 
 def query_artists_within_radius(lat0, lon0, radius_miles, db):
     dist_expr = miles_distance_expr(lat0, lon0, Artist.latitude, Artist.longitude).label("distance_miles")
-
     lat_min, lat_max, lon_min, lon_max = bounding_box(lat0, lon0, radius_miles)
-
     q = (
         db.query(Artist, dist_expr)
         .filter(
@@ -99,10 +91,6 @@ class ZipNotFoundError(Exception):
 
 @lru_cache(maxsize=1)
 def _load_zip_lat_lon_map(csv_path: str) -> dict[str, tuple[float, float]]:
-    """
-    Load ZIP → (lat, lon) map into memory.
-    Cached so the CSV is read only once per process.
-    """
     path = Path(csv_path)
     if not path.exists():
         raise FileNotFoundError(f"ZIP CSV not found: {csv_path}")
@@ -118,9 +106,7 @@ def _load_zip_lat_lon_map(csv_path: str) -> dict[str, tuple[float, float]]:
         lon_h = headers.get("lng") or headers.get("lon") or headers.get("longitude")
 
         if not (zip_h and lat_h and lon_h):
-            raise ValueError(
-                f"CSV must contain zip, lat, lon columns. Found: {reader.fieldnames}"
-            )
+            raise ValueError(f"CSV must contain zip, lat, lon columns. Found: {reader.fieldnames}")
 
         for row in reader:
             z = row[zip_h].strip()
@@ -136,17 +122,10 @@ def _load_zip_lat_lon_map(csv_path: str) -> dict[str, tuple[float, float]]:
     return zip_map
 
 def get_lat_lon_from_zip(zip_code: str, csv_path: str) -> Tuple[float, float]:
-    """
-    Given a 5-digit ZIP code, return (latitude, longitude).
-    Raises ZipNotFoundError if ZIP is not present in CSV.
-    """
     z = zip_code.strip()[:5]
-
     if len(z) != 5:
         raise ValueError(f"Invalid ZIP code: {zip_code}")
-
     zip_map = _load_zip_lat_lon_map(csv_path)
-
     try:
         return zip_map[z]
     except KeyError:
@@ -201,25 +180,18 @@ def list_artists(
 
         if filter_zip:
             query = query.filter(Artist.zip_code == filter_zip)
-
         if neighborhood:
             query = query.filter(Artist.neighborhood.ilike(f"%{neighborhood}%"))
-
         if genre:
             query = query.filter(Artist.genre.ilike(f"%{genre}%"))
-
         if first_name:
             query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))
-
         if last_name:
             query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
-
         if stage_name:
             query = query.filter(Artist.stage_name.ilike(f"%{stage_name}%"))
-
         if min_listeners is not None:
             query = query.filter(Artist.monthly_listeners >= min_listeners)
-
         if max_listeners is not None:
             query = query.filter(Artist.monthly_listeners <= max_listeners)
 
@@ -255,6 +227,9 @@ def list_artists(
             "zip_code": artist.zip_code,
             "neighborhood": artist.neighborhood,
             "spotify_url": artist.spotify_url,
+            "youtube_url": artist.youtube_url,
+            "instagram_url": artist.instagram_url,
+            "soundcloud_url": artist.soundcloud_url,
             "monthly_listeners": artist.monthly_listeners,
             "created_at": artist.created_at,
             "distance": "{:.2f}".format(distance)
@@ -271,21 +246,17 @@ def list_artists(
 
 @router.post("/artist-submissions")
 def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, db: Session = Depends(get_db)):
-    # 1) Honeypot: if filled, treat as spam but "pretend success"
     if payload.company and payload.company.strip():
         return {"ok": True}
 
-    # 2) Basic "proof link" requirement
     if not (payload.spotify_url or payload.youtube_url or payload.soundcloud_url or payload.instagram_url):
         raise HTTPException(status_code=400, detail="Please include at least one valid link.")
 
-    # 3) Rate limiting by IP
     ip = request.client.host if request.client else None
     if ip and too_many_recent_submissions(db, ip):
         raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
 
     raw_token, token_hash = generate_token()
-
     ua = request.headers.get("user-agent", "")[:256]
 
     sub = ArtistSubmission(

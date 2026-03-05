@@ -18,7 +18,10 @@ interface Artist {
   neighborhood: string;
   monthly_listeners: number | null;
   spotify_url: string;
-  distance : string;
+  youtube_url: string;
+  instagram_url: string;
+  soundcloud_url: string;
+  distance: string;
 }
 
 function App() {
