@@ -59,7 +59,7 @@ export default function ArtistTable({ artists }: Props) {
             <th>Location</th>
             <th>Distance</th>
             <th>Links</th>
-            <th>Listeners</th>
+            <th>Spotify Followers</th>
           </tr>
         </thead>
         <tbody>

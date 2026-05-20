@@ -394,6 +394,28 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
 class RejectBody(BaseModel):
     reason: Optional[str] = None
 
+@router.post("/admin/sync-spotify", dependencies=[Depends(require_admin)])
+def sync_spotify_followers(db: Session = Depends(get_db)):
+    from backend.utils.spotify import get_access_token, get_artist_followers
+    artists = db.query(Artist).filter(Artist.spotify_url.isnot(None)).all()
+    token = get_access_token()
+    updated = 0
+    failed = 0
+    for artist in artists:
+        try:
+            followers = get_artist_followers(artist.spotify_url, token)
+            if followers is not None:
+                artist.monthly_listeners = followers
+                artist.spotify_followers_updated_at = datetime.now(timezone.utc)
+                updated += 1
+            else:
+                failed += 1
+        except Exception:
+            failed += 1
+    db.commit()
+    return {"ok": True, "updated": updated, "failed": failed}
+
+
 @router.post("/admin/artist-submissions/{submission_id}/reject", dependencies=[Depends(require_admin)])
 def reject_submission(submission_id: int, body: RejectBody, db: Session = Depends(get_db)):
     sub = db.query(ArtistSubmission).filter(ArtistSubmission.id == submission_id).first()

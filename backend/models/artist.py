@@ -21,6 +21,7 @@ class Artist(Base):
     bio = Column(Text)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.now())
+    spotify_followers_updated_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_genre", "genre"),
