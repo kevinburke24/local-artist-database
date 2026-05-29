@@ -16,3 +16,18 @@ def send_verification_email(to_email: str, first_name: str, verify_url: str):
             <p><a href="{verify_url}">Confirm Email</a></p>
         """,
     })
+
+def send_edit_link_email(to_email: str, first_name: str, edit_url: str):
+    resend.api_key = os.getenv("RESEND_API_KEY", "")
+
+    resend.Emails.send({
+        "from": FROM_ADDRESS,
+        "to": [to_email],
+        "subject": "Edit your artist listing",
+        "html": f"""
+            <p>Hello, {first_name}!</p>
+            <p>Click the link below to edit your listing. The link expires in 1 hour.</p>
+            <p><a href="{edit_url}">Edit your listing</a></p>
+            <p>If you didn't request this, you can ignore this email.</p>
+        """,
+    })

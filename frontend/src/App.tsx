@@ -6,6 +6,7 @@ import ArtistTable from "./components/ArtistTable";
 import ArtistFilters from "./components/ArtistFilters";
 import SkeletonTable from "./components/SkeletonTable";
 import AddYourself from "./components/AddYourself";
+import EditArtist from "./components/EditArtist";
 
 interface Artist {
   id: number;
@@ -195,6 +196,7 @@ function App() {
         }
       />
       <Route path="/artists/:id" element={<ArtistDetail />} />
+      <Route path="/artists/:id/edit" element={<EditArtist />} />
       <Route path="/add-yourself" element={<AddYourself />} />
     </Routes>
   );

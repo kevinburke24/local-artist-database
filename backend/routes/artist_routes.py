@@ -17,7 +17,7 @@ from backend.schemas.artist_query import ArtistQueryParams
 from backend.utils.errors import error
 from backend.utils.rate_limit import too_many_recent_submissions
 from backend.utils.tokens import generate_token, hash_token
-from backend.utils.email import send_verification_email
+from backend.utils.email import send_verification_email, send_edit_link_email
 import csv
 import math
 import os
@@ -307,6 +307,7 @@ def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
         "zip_code": sub.zip_code,
         "city": sub.city,
         "state": sub.state,
+        "email": str(sub.email).strip().lower(),
         "genre": sub.genre,
         "spotify_url": sub.spotify_url,
         "youtube_url": sub.youtube_url,
@@ -351,6 +352,76 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
     db.commit()
 
     return RedirectResponse(url=f"{frontend_url}?verified=true")
+
+class EditRequestBody(BaseModel):
+    email: str
+
+class ArtistEditBody(BaseModel):
+    token: str
+    stage_name: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    neighborhood: Optional[str] = None
+    genre: Optional[str] = None
+    spotify_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    instagram_url: Optional[str] = None
+    soundcloud_url: Optional[str] = None
+    bio: Optional[str] = None
+
+@router.post("/{artist_id}/request-edit")
+def request_edit(artist_id: int, body: EditRequestBody, db: Session = Depends(get_db)):
+    artist = db.query(Artist).filter(Artist.id == artist_id).first()
+    # Always return the same response to avoid leaking whether artist/email exists
+    generic_response = {"ok": True, "message": "If that email matches our records, you'll receive an edit link shortly."}
+    if not artist or not artist.email:
+        return generic_response
+    if artist.email.strip().lower() != body.email.strip().lower():
+        return generic_response
+
+    raw_token, token_hash = generate_token()
+    artist.edit_token_hash = token_hash
+    artist.edit_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    db.commit()
+
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    edit_url = f"{frontend_url}/artists/{artist_id}/edit?token={raw_token}"
+    send_edit_link_email(to_email=artist.email, first_name=artist.first_name, edit_url=edit_url)
+    return generic_response
+
+@router.patch("/{artist_id}")
+def edit_artist(artist_id: int, body: ArtistEditBody, db: Session = Depends(get_db)):
+    artist = db.query(Artist).filter(Artist.id == artist_id).first()
+    if not artist:
+        raise HTTPException(status_code=404, detail="Artist not found")
+    if not artist.edit_token_hash or not artist.edit_token_expires_at:
+        raise HTTPException(status_code=400, detail="Invalid or expired edit link")
+    if artist.edit_token_expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Edit link has expired")
+    if hash_token(body.token) != artist.edit_token_hash:
+        raise HTTPException(status_code=400, detail="Invalid edit link")
+
+    updatable = ["stage_name", "city", "state", "zip_code", "neighborhood", "genre",
+                 "spotify_url", "youtube_url", "instagram_url", "soundcloud_url", "bio"]
+    for field in updatable:
+        val = getattr(body, field)
+        if val is not None:
+            setattr(artist, field, val.strip() if isinstance(val, str) else val)
+
+    if body.zip_code:
+        try:
+            lat, lon = get_lat_lon_from_zip(body.zip_code, CSV_PATH)
+            artist.latitude = lat
+            artist.longitude = lon
+        except (ValueError, ZipNotFoundError):
+            raise HTTPException(status_code=400, detail="Invalid ZIP code")
+
+    artist.edit_token_hash = None
+    artist.edit_token_expires_at = None
+    db.commit()
+    db.refresh(artist)
+    return {"ok": True}
 
 def require_admin(x_admin_token: str = Header(default="")):
     expected = os.getenv("ADMIN_TOKEN", "")

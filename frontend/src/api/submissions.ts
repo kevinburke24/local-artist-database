@@ -6,6 +6,8 @@ export type ArtistSubmissionsCreate = {
     stage_name: string;
     email: string;
     zip_code: string;
+    city?: string | null;
+    state?: string | null;
     genre: string;
     neighborhood?: string | null;
     spotify_url?: string | null;

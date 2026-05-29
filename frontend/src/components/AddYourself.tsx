@@ -49,6 +49,8 @@ export default function AddYourself() {
         email.trim().length > 0 &&
         genre.trim().length > 0 &&
         isFiveDigitZip(zip) &&
+        city.trim().length > 0 &&
+        stateAbbr.trim().length === 2 &&
         linkCount >= 1;
 
     async function onSubmit(e: React.FormEvent) {
@@ -58,7 +60,7 @@ export default function AddYourself() {
 
         if (!canSubmit) {
             setErrorMsg(
-                "Please fill in all required fields. ZIP code must be 5 digits, and at least one link is required."
+                "Please fill in all required fields. ZIP code must be 5 digits, state must be a 2-letter abbreviation, and at least one link is required."
             );
             return;
         }
@@ -222,7 +224,7 @@ export default function AddYourself() {
 
                 <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
                     <div style={fieldStyle}>
-                        <label>City</label>
+                        <label>City *</label>
                         <input
                             style={inputStyle}
                             value={city}
@@ -231,7 +233,7 @@ export default function AddYourself() {
                         />
                     </div>
                     <div style={fieldStyle}>
-                        <label>State</label>
+                        <label>State *</label>
                         <input
                             style={inputStyle}
                             value={stateAbbr}
@@ -239,6 +241,9 @@ export default function AddYourself() {
                             placeholder="MA"
                             maxLength={2}
                         />
+                        {stateAbbr.trim().length > 0 && stateAbbr.trim().length !== 2 && (
+                            <div style={{ color: "#c0392b", fontSize: 12 }}>Must be 2-letter abbreviation</div>
+                        )}
                     </div>
                 </div>
 
