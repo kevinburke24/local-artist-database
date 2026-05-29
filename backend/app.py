@@ -3,11 +3,11 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import __version__
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
-from backend.db.database import engine, Base
-from backend.models.search_log import SearchLog
-from backend.models.artist import Artist
-from backend.routes.artist_routes import router as artist_router
-from backend.routes.artist_routes import limiter, get_db
+from db.database import engine, Base
+from models.search_log import SearchLog
+from models.artist import Artist
+from routes.artist_routes import router as artist_router
+from routes.artist_routes import limiter, get_db
 import logging
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 

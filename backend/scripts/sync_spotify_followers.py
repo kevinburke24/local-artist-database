@@ -13,9 +13,9 @@ Requires env vars: SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, DATABASE_URL
 import logging
 from datetime import datetime, timezone
 
-from backend.db.database import SessionLocal
-from backend.models.artist import Artist
-from backend.utils.spotify import get_access_token, get_artist_followers
+from db.database import SessionLocal
+from models.artist import Artist
+from utils.spotify import get_access_token, get_artist_followers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, DOUBLE_PRECISION, String, Text, TIMESTAMP, Index, create_engine
 from sqlalchemy.sql import func
-from backend.db.database import Base
+from db.database import Base
 
 class Artist(Base):
     __tablename__ = "artists"

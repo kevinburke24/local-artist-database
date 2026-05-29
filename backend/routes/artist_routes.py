@@ -6,18 +6,18 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from backend.db.database import SessionLocal
-from backend.models.artist import Artist
-from backend.models.artist_submission import ArtistSubmission, SubmissionStatus
-from backend.models.search_log import SearchLog
-from backend.schemas.artist import ArtistCreate, ArtistResponse
-from backend.schemas.artist_submission import ArtistSubmissionCreate, RejectBody
-from backend.schemas.pagination import ArtistListResponse
-from backend.schemas.artist_query import ArtistQueryParams
-from backend.utils.errors import error
-from backend.utils.rate_limit import too_many_recent_submissions
-from backend.utils.tokens import generate_token, hash_token
-from backend.utils.email import send_verification_email, send_edit_link_email
+from db.database import SessionLocal
+from models.artist import Artist
+from models.artist_submission import ArtistSubmission, SubmissionStatus
+from models.search_log import SearchLog
+from schemas.artist import ArtistCreate, ArtistResponse
+from schemas.artist_submission import ArtistSubmissionCreate, RejectBody
+from schemas.pagination import ArtistListResponse
+from schemas.artist_query import ArtistQueryParams
+from utils.errors import error
+from utils.rate_limit import too_many_recent_submissions
+from utils.tokens import generate_token, hash_token
+from utils.email import send_verification_email, send_edit_link_email
 import csv
 import math
 import os
@@ -473,7 +473,7 @@ class RejectBody(BaseModel):
 
 @router.post("/admin/sync-spotify", dependencies=[Depends(require_admin)])
 def sync_spotify_followers(db: Session = Depends(get_db)):
-    from backend.utils.spotify import get_access_token, get_artist_followers
+    from utils.spotify import get_access_token, get_artist_followers
     artists = db.query(Artist).filter(Artist.spotify_url.isnot(None)).all()
     token = get_access_token()
     updated = 0

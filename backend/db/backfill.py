@@ -1,5 +1,5 @@
-from backend.models.artist import Artist
-from backend.db.database import SessionLocal
+from models.artist import Artist
+from db.database import SessionLocal
 from pathlib import Path
 import csv
 

@@ -2,7 +2,7 @@ import enum
 from sqlalchemy import (
     Column, Integer, String, DateTime, Text, Enum, func, TIMESTAMP
 )
-from backend.db.database import Base  # adjust import to your Base
+from db.database import Base
 from sqlalchemy import DateTime
 
 class SubmissionStatus(str, enum.Enum):
