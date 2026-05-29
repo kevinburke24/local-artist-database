@@ -149,7 +149,7 @@ export default function EditArtist() {
     return (
         <div style={{ maxWidth: 600, margin: "40px auto", padding: "0 16px" }}>
             <button
-                onClick={() => navigate(`/artists/${id}`)}
+                onClick={() => navigate(-1)}
                 style={{ marginBottom: 20, padding: "8px 12px", borderRadius: 6, background: "#f2f2f2", border: "1px solid #ccc", cursor: "pointer" }}
             >
                 ← Back
