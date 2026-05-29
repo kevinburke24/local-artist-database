@@ -30,6 +30,8 @@ class ArtistSubmission(Base):
     last_name = Column(String(50), nullable=False)
     stage_name = Column(String(200), nullable=False)
     zip_code = Column(String(10), nullable=False)
+    city = Column(String(100), nullable=True)
+    state = Column(String(2), nullable=True)
     neighborhood = Column(String(50), nullable=True)
     genre = Column(String(80), nullable=False)
     bio = Column(Text, nullable=True)

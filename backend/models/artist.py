@@ -9,6 +9,8 @@ class Artist(Base):
     last_name = Column(String(50), nullable=False)
     stage_name = Column(String(50), nullable=False)
     zip_code = Column(String(5), nullable=False)
+    city = Column(String(50), nullable=True)
+    state = Column(String(2), nullable=True)
     latitude = Column(DOUBLE_PRECISION)
     longitude = Column(DOUBLE_PRECISION)
     neighborhood = Column(String(50), nullable=True)

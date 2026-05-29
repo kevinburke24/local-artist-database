@@ -23,6 +23,8 @@ export default function AddYourself() {
     const [stageName, setStageName] = useState("");
     const [email, setEmail] = useState("");
     const [zip, setZip] = useState("");
+    const [city, setCity] = useState("");
+    const [stateAbbr, setStateAbbr] = useState("");
     const [genre, setGenre] = useState("");
     const [neighborhood, setNeighborhood] = useState("");
     const [spotifyUrl, setSpotifyUrl] = useState("");
@@ -68,6 +70,8 @@ export default function AddYourself() {
                 stage_name: stageName.trim(),
                 email: email.trim(),
                 zip_code: zip.trim(),
+                city: city.trim() || null,
+                state: stateAbbr.trim().toUpperCase() || null,
                 genre: genre.trim(),
                 neighborhood: neighborhood.trim() || null,
                 spotify_url: spotifyUrl.trim() || null,
@@ -86,6 +90,8 @@ export default function AddYourself() {
             setStageName("");
             setEmail("");
             setZip("");
+            setCity("");
+            setStateAbbr("");
             setGenre("");
             setNeighborhood("");
             setSpotifyUrl("");
@@ -210,6 +216,28 @@ export default function AddYourself() {
                             value={genre}
                             onChange={(e) => setGenre(e.target.value)}
                             placeholder="folk, pop, soul..."
+                        />
+                    </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
+                    <div style={fieldStyle}>
+                        <label>City</label>
+                        <input
+                            style={inputStyle}
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            placeholder="e.g. Boston"
+                        />
+                    </div>
+                    <div style={fieldStyle}>
+                        <label>State</label>
+                        <input
+                            style={inputStyle}
+                            value={stateAbbr}
+                            onChange={(e) => setStateAbbr(e.target.value)}
+                            placeholder="MA"
+                            maxLength={2}
                         />
                     </div>
                 </div>

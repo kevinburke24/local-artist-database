@@ -10,6 +10,8 @@ interface Artist {
   last_name: string;
   stage_name: string;
   genre: string;
+  city?: string;
+  state?: string;
   zip_code: string;
   neighborhood: string;
   spotify_url: string;
@@ -56,7 +58,7 @@ export default function ArtistTable({ artists }: Props) {
             <th>Artist</th>
             <th>Stage Name</th>
             <th>Genre</th>
-            <th>Location</th>
+            <th>City</th>
             <th>Distance</th>
             <th>Links</th>
             <th>Spotify Followers</th>
@@ -75,9 +77,13 @@ export default function ArtistTable({ artists }: Props) {
                 {a.genre ? <span className="genre-badge">{a.genre}</span> : "—"}
               </td>
               <td>
-                <div>{a.neighborhood || a.zip_code}</div>
+                <div>
+                  {a.city && a.state
+                    ? `${a.city}, ${a.state}`
+                    : a.city || a.zip_code}
+                </div>
                 {a.neighborhood && (
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{a.zip_code}</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{a.neighborhood}</div>
                 )}
               </td>
               <td className="distance-text">{a.distance} mi</td>

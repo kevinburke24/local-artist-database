@@ -23,6 +23,8 @@ class ArtistSubmissionCreate(BaseModel):
     email: EmailStr
 
     zip_code: Optional[str] = Field(default=None, max_length=10)
+    city: Optional[str] = Field(default=None, max_length=100)
+    state: Optional[str] = Field(default=None, max_length=2)
     genre: Optional[str] = Field(default=None, max_length=80)
 
     spotify_url: Optional[str] = None
