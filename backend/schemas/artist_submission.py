@@ -9,6 +9,7 @@ ALLOWED_DOMAINS = {
     "www.youtube.com",
 }
 
+
 def _is_valid_http_url(url: str) -> bool:
     try:
         u = urlparse(url)
@@ -23,8 +24,6 @@ class ArtistSubmissionCreate(BaseModel):
     email: EmailStr
 
     zip_code: Optional[str] = Field(default=None, max_length=10)
-    city: str = Field(..., min_length=1, max_length=100)
-    state: str = Field(..., min_length=2, max_length=2)
     genre: Optional[str] = Field(default=None, max_length=80)
 
     spotify_url: Optional[str] = None
