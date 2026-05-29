@@ -29,8 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=engine)
-
 app.include_router(artist_router)
 
 logging.basicConfig(level=logging.INFO)
