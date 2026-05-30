@@ -11,7 +11,7 @@ class ArtistBase(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     neighborhood: Optional[str] = None
-    monthly_listeners: Optional[int] = None
+    spotify_followers: Optional[int] = None
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None
     soundcloud_url: Optional[str] = None

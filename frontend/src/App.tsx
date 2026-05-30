@@ -16,7 +16,7 @@ interface Artist {
   genre: string;
   zip_code: string;
   neighborhood: string;
-  monthly_listeners: number | null;
+  spotify_followers: number | null;
   spotify_url: string;
   youtube_url: string;
   instagram_url: string;

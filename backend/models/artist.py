@@ -15,7 +15,7 @@ class Artist(Base):
     longitude = Column(DOUBLE_PRECISION)
     neighborhood = Column(String(50), nullable=True)
     genre = Column(String(50), nullable=False)
-    monthly_listeners = Column(Integer)
+    spotify_followers = Column(Integer)
     spotify_url = Column(Text)
     youtube_url = Column(Text)
     soundcloud_url = Column(Text)
@@ -31,5 +31,5 @@ class Artist(Base):
     __table_args__ = (
         Index("idx_genre", "genre"),
         Index("idx_zip", "zip_code"),
-        Index("idx_listeners", "monthly_listeners")
+        Index("idx_listeners", "spotify_followers")
     )

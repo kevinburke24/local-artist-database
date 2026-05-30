@@ -18,7 +18,7 @@ interface Artist {
   youtube_url: string;
   instagram_url: string;
   soundcloud_url: string;
-  monthly_listeners: number | null;
+  spotify_followers: number | null;
   distance: string;
 }
 
@@ -95,7 +95,7 @@ export default function ArtistTable({ artists }: Props) {
                   <LinkIcon href={a.soundcloud_url} label="SoundCloud" src={soundcloudLogo} />
                 </div>
               </td>
-              <td className="listeners-num">{formatListeners(a.monthly_listeners)}</td>
+              <td className="listeners-num">{formatListeners(a.spotify_followers)}</td>
             </tr>
           ))}
         </tbody>

@@ -1,6 +1,13 @@
+import sys
+import os
+_repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _repo_root)
+sys.path.insert(0, os.path.join(_repo_root, "backend"))
 from logging.config import fileConfig
-from backend.models.artist import Base
-from backend.models.artist_submission import Base
+import backend.models.artist
+import backend.models.artist_submission
+import backend.models.search_log
+from backend.db.database import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context

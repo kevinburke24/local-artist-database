@@ -14,7 +14,7 @@ interface Artist {
   state?: string;
   zip_code: string;
   neighborhood?: string;
-  monthly_listeners: number | null;
+  spotify_followers: number | null;
   spotify_url?: string;
   youtube_url?: string;
   instagram_url?: string;
@@ -58,7 +58,7 @@ function ArtistDetail() {
     ["Neighborhood", artist.neighborhood || null],
     ["ZIP Code", artist.zip_code],
     ["Genre", artist.genre],
-    ["Monthly Listeners", artist.monthly_listeners?.toLocaleString() ?? "—"],
+    ["Spotify Followers", artist.spotify_followers?.toLocaleString() ?? "—"],
   ];
 
   const links: [string, string | undefined][] = [

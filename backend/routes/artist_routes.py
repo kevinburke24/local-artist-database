@@ -191,16 +191,16 @@ def list_artists(
         if stage_name:
             query = query.filter(Artist.stage_name.ilike(f"%{stage_name}%"))
         if min_listeners is not None:
-            query = query.filter(Artist.monthly_listeners >= min_listeners)
+            query = query.filter(Artist.spotify_followers >= min_listeners)
         if max_listeners is not None:
-            query = query.filter(Artist.monthly_listeners <= max_listeners)
+            query = query.filter(Artist.spotify_followers <= max_listeners)
 
     except Exception as e:
         return {"Exception": e}
 
     valid_sort_fields = {
         "last_name": Artist.last_name,
-        "monthly_listeners": Artist.monthly_listeners,
+        "spotify_followers": Artist.spotify_followers,
         "created_at": Artist.created_at
     }
 
@@ -232,7 +232,7 @@ def list_artists(
             "youtube_url": artist.youtube_url,
             "instagram_url": artist.instagram_url,
             "soundcloud_url": artist.soundcloud_url,
-            "monthly_listeners": artist.monthly_listeners,
+            "spotify_followers": artist.spotify_followers,
             "created_at": artist.created_at,
             "distance": "{:.2f}".format(distance)
         }
@@ -288,7 +288,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     db.commit()
     db.refresh(sub)
 
-    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+    backend_url = os.environ.getenv("BACKEND_URL", "http://localhost:8000")
     verify_url = f"{backend_url}/artists/artist-submissions/verify?token={raw_token}"
     send_verification_email(
         to_email=sub.email,
@@ -316,7 +316,7 @@ def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
         "latitude": lat,
         "longitude": lon,
         "neighborhood": sub.neighborhood,
-        "monthly_listeners": 0,
+        "spotify_followers": 0,
         "bio": sub.bio
     }
 
@@ -482,7 +482,7 @@ def sync_spotify_followers(db: Session = Depends(get_db)):
         try:
             followers = get_artist_followers(artist.spotify_url, token)
             if followers is not None:
-                artist.monthly_listeners = followers
+                artist.spotify_followers = followers
                 artist.spotify_followers_updated_at = datetime.now(timezone.utc)
                 updated += 1
             else:

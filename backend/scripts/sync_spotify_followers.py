@@ -35,7 +35,7 @@ def sync():
             try:
                 followers = get_artist_followers(artist.spotify_url, token)
                 if followers is not None:
-                    artist.monthly_listeners = followers
+                    artist.spotify_followers = followers
                     artist.spotify_followers_updated_at = datetime.now(timezone.utc)
                     updated += 1
                     logger.info("  %s -> %d followers", artist.stage_name, followers)
