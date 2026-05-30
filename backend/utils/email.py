@@ -4,7 +4,7 @@ import resend
 FROM_ADDRESS = "Local Artist Database <onboarding@resend.dev>"
 
 def send_verification_email(to_email: str, first_name: str, verify_url: str):
-    resend.api_key = os.getenv("RESEND_API_KEY", "")
+    resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
     resend.Emails.send({
         "from": FROM_ADDRESS,

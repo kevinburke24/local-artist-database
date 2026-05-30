@@ -119,8 +119,8 @@ function ResultsPage({
       });
       setArtists(data.artists);
       setTotal(data.total);
-    } catch {
-      setError("Could not load artists. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load artists. Please try again.");
     } finally {
       setLoading(false);
     }

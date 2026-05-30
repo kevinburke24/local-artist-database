@@ -14,9 +14,12 @@ export async function fetchArtists(params: any) {
     if (params.limit) query.append("limit", params.limit);
     try {
         const res = await fetch(`${API_URL}/artists?${query.toString()}`);
-        return res.json();
-    } catch {
-        throw new Error(`${API_URL}/artists?${query.toString()}`);
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "Failed to fetch artists");
+        return body;
+    } catch (err) {
+        if (err instanceof Error) throw err;
+        throw new Error("Could not connect to the server. Please try again.");
     }
 }
 

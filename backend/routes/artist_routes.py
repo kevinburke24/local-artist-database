@@ -174,8 +174,8 @@ def list_artists(
             raise HTTPException(400, detail="origin_zip is required")
         try:
             lat, lon = get_lat_lon_from_zip(origin_zip, CSV_PATH)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        except (ValueError, ZipNotFoundError):
+            raise HTTPException(status_code=400, detail=f"'{origin_zip}' is not a recognized ZIP code. Please enter a valid US ZIP code.")
         query = query_artists_within_radius(lat, lon, radius, db)
 
         if filter_zip:
