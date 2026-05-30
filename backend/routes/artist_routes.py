@@ -288,7 +288,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     db.commit()
     db.refresh(sub)
 
-    backend_url = os.environ.getenv("BACKEND_URL", "http://localhost:8000")
+    backend_url = os.environ.get("BACKEND_URL")
     verify_url = f"{backend_url}/artists/artist-submissions/verify?token={raw_token}"
     send_verification_email(
         to_email=sub.email,
