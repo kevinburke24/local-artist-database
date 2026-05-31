@@ -254,7 +254,8 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
     if not (payload.spotify_url or payload.youtube_url or payload.soundcloud_url or payload.instagram_url):
         raise HTTPException(status_code=400, detail="Please include at least one valid link.")
 
-    ip = request.client.host if request.client else None
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else None)
     if ip and too_many_recent_submissions(db, ip):
         raise HTTPException(status_code=429, detail="Too many submissions. Please try again later.")
 
