@@ -299,6 +299,19 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
 
     return {"ok": True, "submission_id": sub.id}
 
+def _try_fetch_spotify_followers(artist) -> None:
+    if not artist.spotify_url:
+        return
+    try:
+        from utils.spotify import get_access_token, get_artist_followers
+        token = get_access_token()
+        followers = get_artist_followers(artist.spotify_url, token)
+        if followers is not None:
+            artist.spotify_followers = followers
+            artist.spotify_followers_updated_at = datetime.now(timezone.utc)
+    except Exception:
+        pass
+
 def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
     lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
     return {
@@ -317,7 +330,6 @@ def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
         "latitude": lat,
         "longitude": lon,
         "neighborhood": sub.neighborhood,
-        "spotify_followers": 0,
         "bio": sub.bio
     }
 
@@ -345,6 +357,7 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
+    _try_fetch_spotify_followers(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
@@ -461,6 +474,7 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
+    _try_fetch_spotify_followers(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
@@ -474,24 +488,10 @@ class RejectBody(BaseModel):
 
 @router.post("/admin/sync-spotify", dependencies=[Depends(require_admin)])
 def sync_spotify_followers(db: Session = Depends(get_db)):
-    from utils.spotify import get_access_token, get_artist_followers
-    artists = db.query(Artist).filter(Artist.spotify_url.isnot(None)).all()
-    token = get_access_token()
-    updated = 0
-    failed = 0
-    for artist in artists:
-        try:
-            followers = get_artist_followers(artist.spotify_url, token)
-            if followers is not None:
-                artist.spotify_followers = followers
-                artist.spotify_followers_updated_at = datetime.now(timezone.utc)
-                updated += 1
-            else:
-                failed += 1
-        except Exception:
-            failed += 1
-    db.commit()
-    return {"ok": True, "updated": updated, "failed": failed}
+    from utils.spotify import sync_all_artists
+    result = sync_all_artists(db)
+    return {"ok": True, **result}
+
 
 
 @router.post("/admin/artist-submissions/{submission_id}/reject", dependencies=[Depends(require_admin)])

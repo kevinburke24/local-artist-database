@@ -1,6 +1,10 @@
+import logging
 import os
 import re
 import requests
+from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE = "https://api.spotify.com/v1"
@@ -39,3 +43,36 @@ def get_artist_followers(spotify_url: str, access_token: str) -> int | None:
         return None
     resp.raise_for_status()
     return resp.json()["followers"]["total"]
+
+
+def sync_all_artists(db) -> dict:
+    """Fetch and update Spotify followers for all artists with a Spotify URL."""
+    from models.artist import Artist
+
+    artists = db.query(Artist).filter(Artist.spotify_url.isnot(None)).all()
+    if not artists:
+        return {"updated": 0, "failed": 0}
+
+    try:
+        token = get_access_token()
+    except Exception as e:
+        logger.error("Spotify token fetch failed: %s", e)
+        return {"updated": 0, "failed": len(artists)}
+
+    updated = 0
+    failed = 0
+    for artist in artists:
+        try:
+            followers = get_artist_followers(artist.spotify_url, token)
+            if followers is not None:
+                artist.spotify_followers = followers
+                artist.spotify_followers_updated_at = datetime.now(timezone.utc)
+                updated += 1
+            else:
+                failed += 1
+        except Exception as e:
+            logger.warning("Failed to fetch followers for artist %s: %s", artist.id, e)
+            failed += 1
+    db.commit()
+    logger.info("Spotify sync complete: updated=%d failed=%d", updated, failed)
+    return {"updated": updated, "failed": failed}

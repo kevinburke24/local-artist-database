@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A FastAPI + React + TypeScript app for discovering local music artists by ZIP code radius. Artists can submit themselves through a moderated pipeline with email verification. Currently has data for the Boston/Cambridge/Somerville area.
 
-**Hosting:** Frontend on Vercel, backend on Railway (PostgreSQL database also on Railway).
+**Hosting:** Frontend on Vercel, backend on Vercel, PostgreSQL database also on Neon.
 
 ## Backend
 
