@@ -299,15 +299,16 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
 
     return {"ok": True, "submission_id": sub.id}
 
-def _try_fetch_spotify_followers(artist) -> None:
+def _try_fetch_spotify_info(artist) -> None:
     if not artist.spotify_url:
         return
     try:
-        from utils.spotify import get_access_token, get_artist_followers
+        from utils.spotify import get_access_token, get_artist_info
         token = get_access_token()
-        followers = get_artist_followers(artist.spotify_url, token)
-        if followers is not None:
-            artist.spotify_followers = followers
+        info = get_artist_info(artist.spotify_url, token)
+        if info is not None:
+            artist.stage_name = info["name"]
+            artist.spotify_followers = info["followers"]
             artist.spotify_followers_updated_at = datetime.now(timezone.utc)
     except Exception:
         pass
@@ -357,7 +358,7 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
-    _try_fetch_spotify_followers(artist)
+    _try_fetch_spotify_info(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
@@ -474,7 +475,7 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
-    _try_fetch_spotify_followers(artist)
+    _try_fetch_spotify_info(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
