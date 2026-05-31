@@ -95,7 +95,7 @@ export default function ArtistTable({ artists }: Props) {
                   <LinkIcon href={a.soundcloud_url} label="SoundCloud" src={soundcloudLogo} />
                 </div>
               </td>
-              <td className="listeners-num">{formatListeners(a.spotify_followers)}</td>
+              <td className="listeners-num">{a.spotify_url ? formatListeners(a.spotify_followers) : "No Spotify"}</td>
             </tr>
           ))}
         </tbody>
