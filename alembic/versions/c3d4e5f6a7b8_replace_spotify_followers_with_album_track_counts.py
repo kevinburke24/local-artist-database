@@ -16,6 +16,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    op.execute("DELETE FROM artist_submissions")
+    op.execute("DELETE FROM artists")
     op.drop_index("idx_listeners", table_name="artists")
     op.drop_column("artists", "spotify_followers")
     op.add_column("artists", sa.Column("spotify_album_count", sa.Integer(), nullable=True))
