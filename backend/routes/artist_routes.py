@@ -19,11 +19,14 @@ from utils.rate_limit import too_many_recent_submissions
 from utils.tokens import generate_token, hash_token
 from utils.email import send_verification_email, send_edit_link_email
 import csv
+import logging
 import math
 import os
 from functools import lru_cache
 from typing import Tuple, Optional
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
@@ -310,8 +313,11 @@ def _try_fetch_spotify_info(artist) -> None:
             artist.stage_name = info["name"]
             artist.spotify_followers = info["followers"]
             artist.spotify_followers_updated_at = datetime.now(timezone.utc)
-    except Exception:
-        pass
+            logger.info("Spotify info fetched for artist %s: name=%s followers=%d", artist.id, info["name"], info["followers"])
+        else:
+            logger.warning("Spotify returned no info for URL: %s", artist.spotify_url)
+    except Exception as e:
+        logger.error("Failed to fetch Spotify info for artist %s (url=%s): %s", artist.id, artist.spotify_url, e)
 
 def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
     lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
