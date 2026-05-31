@@ -16,7 +16,8 @@ interface Artist {
   genre: string;
   zip_code: string;
   neighborhood: string;
-  spotify_followers: number | null;
+  spotify_album_count: number | null;
+  spotify_track_count: number | null;
   spotify_url: string;
   youtube_url: string;
   instagram_url: string;
@@ -99,8 +100,6 @@ function ResultsPage({
   const [name, setName] = useState("");
   const [genre, setGenre] = useState("");
   const [filter_zip, setZip] = useState("");
-  const [minListeners, setMinListeners] = useState("");
-  const [maxListeners, setMaxListeners] = useState("");
 
   async function load() {
     setError("");
@@ -112,8 +111,6 @@ function ResultsPage({
         filter_zip,
         name,
         genre,
-        min_listeners: minListeners ? Number(minListeners) : undefined,
-        max_listeners: maxListeners ? Number(maxListeners) : undefined,
         page,
         limit,
       });
@@ -146,8 +143,6 @@ function ResultsPage({
         name={name} setName={setName}
         genre={genre} setGenre={setGenre}
         zip={filter_zip} setZip={setZip}
-        minListeners={minListeners} setMinListeners={setMinListeners}
-        maxListeners={maxListeners} setMaxListeners={setMaxListeners}
         onSearch={() => { setPage(1); load(); }}
       />
 

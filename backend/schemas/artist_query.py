@@ -12,8 +12,6 @@ class ArtistQueryParams(BaseModel):
     filter_zip: Optional[str] = None
     radius: int = Field(10, ge=1, le=200)
     neighborhood: Optional[str] = None
-    min_listeners: Optional[int] = Field(None, ge=0)
-    max_listeners: Optional[int] = Field(None, ge=0)
     page: int = Field(1, ge=1)
     limit: int = Field(20, ge=1, le=100)
 

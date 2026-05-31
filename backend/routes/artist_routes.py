@@ -151,8 +151,6 @@ def list_artists(
     filter_zip = params.filter_zip
     radius = params.radius
     neighborhood = params.neighborhood
-    min_listeners = params.min_listeners
-    max_listeners = params.max_listeners
     page = params.page
     limit = params.limit
 
@@ -163,8 +161,6 @@ def list_artists(
         genre=genre,
         zip_code=origin_zip,
         neighborhood=neighborhood,
-        min_listeners=min_listeners,
-        max_listeners=max_listeners,
         page=page,
         limit=limit
     )
@@ -193,17 +189,12 @@ def list_artists(
             query = query.filter(Artist.last_name.ilike(f"%{last_name}%"))
         if stage_name:
             query = query.filter(Artist.stage_name.ilike(f"%{stage_name}%"))
-        if min_listeners is not None:
-            query = query.filter(Artist.spotify_followers >= min_listeners)
-        if max_listeners is not None:
-            query = query.filter(Artist.spotify_followers <= max_listeners)
 
     except Exception as e:
         return {"Exception": e}
 
     valid_sort_fields = {
         "last_name": Artist.last_name,
-        "spotify_followers": Artist.spotify_followers,
         "created_at": Artist.created_at
     }
 
@@ -235,7 +226,8 @@ def list_artists(
             "youtube_url": artist.youtube_url,
             "instagram_url": artist.instagram_url,
             "soundcloud_url": artist.soundcloud_url,
-            "spotify_followers": artist.spotify_followers,
+            "spotify_album_count": artist.spotify_album_count,
+            "spotify_track_count": artist.spotify_track_count,
             "created_at": artist.created_at,
             "distance": "{:.2f}".format(distance)
         }
@@ -311,9 +303,10 @@ def _try_fetch_spotify_info(artist) -> None:
         info = get_artist_info(artist.spotify_url, token)
         if info is not None:
             artist.stage_name = info["name"]
-            artist.spotify_followers = info["followers"]
+            artist.spotify_album_count = info["album_count"]
+            artist.spotify_track_count = info["track_count"]
             artist.spotify_followers_updated_at = datetime.now(timezone.utc)
-            logger.info("Spotify info fetched for artist %s: name=%s followers=%d", artist.id, info["name"], info["followers"])
+            logger.info("Spotify info fetched for artist %s: name=%s albums=%d tracks=%d", artist.id, info["name"], info["album_count"], info["track_count"])
         else:
             logger.warning("Spotify returned no info for URL: %s", artist.spotify_url)
     except Exception as e:

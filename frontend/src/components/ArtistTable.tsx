@@ -18,7 +18,8 @@ interface Artist {
   youtube_url: string;
   instagram_url: string;
   soundcloud_url: string;
-  spotify_followers: number | null;
+  spotify_album_count: number | null;
+  spotify_track_count: number | null;
   distance: string;
 }
 
@@ -42,11 +43,12 @@ function LinkIcon({ href, label, src }: { href?: string; label: string; src: str
   );
 }
 
-function formatListeners(n: number | null) {
-  if (n === null) return "—";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
+function formatDiscography(albums: number | null, tracks: number | null) {
+  if (albums === null && tracks === null) return "—";
+  const parts = [];
+  if (albums !== null) parts.push(`${albums} album${albums !== 1 ? "s" : ""}`);
+  if (tracks !== null) parts.push(`${tracks} track${tracks !== 1 ? "s" : ""}`);
+  return parts.join(" · ");
 }
 
 export default function ArtistTable({ artists }: Props) {
@@ -61,7 +63,7 @@ export default function ArtistTable({ artists }: Props) {
             <th>City</th>
             <th>Distance</th>
             <th>Links</th>
-            <th>Spotify Followers</th>
+            <th>Discography</th>
           </tr>
         </thead>
         <tbody>
@@ -95,7 +97,7 @@ export default function ArtistTable({ artists }: Props) {
                   <LinkIcon href={a.soundcloud_url} label="SoundCloud" src={soundcloudLogo} />
                 </div>
               </td>
-              <td className="listeners-num">{a.spotify_url ? formatListeners(a.spotify_followers) : "No Spotify"}</td>
+              <td className="listeners-num">{a.spotify_url ? formatDiscography(a.spotify_album_count, a.spotify_track_count) : "No Spotify"}</td>
             </tr>
           ))}
         </tbody>

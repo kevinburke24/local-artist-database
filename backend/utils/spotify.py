@@ -31,19 +31,35 @@ def extract_artist_id(spotify_url: str) -> str | None:
 
 
 def get_artist_info(spotify_url: str, access_token: str) -> dict | None:
-    """Return {"name": str, "followers": int} for the artist, or None if not found."""
+    """Return {"name": str, "album_count": int, "track_count": int}, or None if not found."""
     artist_id = extract_artist_id(spotify_url)
     if not artist_id:
         return None
-    resp = requests.get(
-        f"{SPOTIFY_API_BASE}/v1/artists/{artist_id}",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    resp = requests.get(f"{SPOTIFY_API_BASE}/v1/artists/{artist_id}", headers=headers)
     if resp.status_code == 404:
         return None
     resp.raise_for_status()
-    data = resp.json()
-    return {"name": data["name"], "followers": data["followers"]["total"]}
+    name = resp.json()["name"]
+
+    album_count = 0
+    track_count = 0
+    url = f"{SPOTIFY_API_BASE}/v1/artists/{artist_id}/albums"
+    params: dict = {"include_groups": "album,single", "limit": 50, "market": "US"}
+    while url:
+        resp = requests.get(url, headers=headers, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+        for item in data["items"]:
+            if item.get("album_group") == "album":
+                album_count += 1
+            track_count += item.get("total_tracks", 0)
+        url = data.get("next")
+        params = {}
+
+    return {"name": name, "album_count": album_count, "track_count": track_count}
 
 
 def sync_all_artists(db) -> dict:
@@ -67,7 +83,8 @@ def sync_all_artists(db) -> dict:
             info = get_artist_info(artist.spotify_url, token)
             if info is not None:
                 artist.stage_name = info["name"]
-                artist.spotify_followers = info["followers"]
+                artist.spotify_album_count = info["album_count"]
+                artist.spotify_track_count = info["track_count"]
                 artist.spotify_followers_updated_at = datetime.now(timezone.utc)
                 updated += 1
             else:

@@ -8,8 +8,6 @@ export async function fetchArtists(params: any) {
     if (params.filter_zip) query.append("filter_zip", params.filter_zip);
     if (params.origin_zip) query.append("origin_zip", params.origin_zip)
     if (params.radius) query.append("radius", params.radius);
-    if (params.min_listeners) query.append("min_listeners", String(params.min_listeners));
-    if (params.max_listeners) query.append("max_listeners", String(params.max_listeners));
     if (params.page) query.append("page", params.page);
     if (params.limit) query.append("limit", params.limit);
     try {
