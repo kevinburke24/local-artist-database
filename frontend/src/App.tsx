@@ -99,6 +99,7 @@ function ResultsPage({
   const [name, setName] = useState("");
   const [genre, setGenre] = useState("");
   const [filter_zip, setZip] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
 
   async function load() {
     setError("");
@@ -110,6 +111,7 @@ function ResultsPage({
         filter_zip,
         name,
         genre,
+        neighborhood,
         page,
         limit,
       });
@@ -142,6 +144,7 @@ function ResultsPage({
         name={name} setName={setName}
         genre={genre} setGenre={setGenre}
         zip={filter_zip} setZip={setZip}
+        neighborhood={neighborhood} setNeighborhood={setNeighborhood}
         onSearch={() => { setPage(1); load(); }}
       />
 
