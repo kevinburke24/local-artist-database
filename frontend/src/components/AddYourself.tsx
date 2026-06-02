@@ -36,7 +36,12 @@ export default function AddYourself() {
     const [bio, setBio] = useState("");
     const [company, setCompany] = useState(""); // honeypot
 
+    const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
+    const [instrumentOtherText, setInstrumentOtherText] = useState("");
+    const [showInstrumentOther, setShowInstrumentOther] = useState(false);
+
     const [genres, setGenres] = useState<string[]>([]);
+    const [instruments, setInstruments] = useState<string[]>([]);
     const [zipError, setZipError] = useState<string | null>(null);
     const [checkedZip, setCheckedZip] = useState<string | null>(null);
 
@@ -48,6 +53,10 @@ export default function AddYourself() {
         fetch(`${API_URL}/artists/genres`)
             .then((res) => (res.ok ? res.json() : Promise.reject()))
             .then((data) => setGenres(data.genres ?? []))
+            .catch(() => {});
+        fetch(`${API_URL}/artists/instruments`)
+            .then((res) => (res.ok ? res.json() : Promise.reject()))
+            .then((data) => setInstruments(data.instruments ?? []))
             .catch(() => {});
     }, []);
 
@@ -80,6 +89,33 @@ export default function AddYourself() {
     }, [zip]);
 
     const zipIsValid = isFiveDigitZip(zip) && checkedZip === zip.trim() && zipError === null;
+
+    function addInstrument(value: string) {
+        const v = value.trim();
+        if (v && !selectedInstruments.includes(v) && selectedInstruments.length < 6) {
+            setSelectedInstruments([...selectedInstruments, v]);
+        }
+    }
+
+    function handleInstrumentSelect(e: React.ChangeEvent<HTMLSelectElement>) {
+        const val = e.target.value;
+        e.target.value = "";
+        if (!val) return;
+        if (val === "__other__") {
+            setShowInstrumentOther(true);
+        } else {
+            addInstrument(val);
+        }
+    }
+
+    function commitInstrumentOther() {
+        const v = instrumentOtherText.trim();
+        if (v) {
+            addInstrument(v);
+            setInstrumentOtherText("");
+            setShowInstrumentOther(false);
+        }
+    }
 
     const linkCount = [spotifyUrl, youtubeUrl, instagramUrl, soundcloudUrl].filter(
         (s) => s.trim().length > 0
@@ -118,6 +154,7 @@ export default function AddYourself() {
                 city: city.trim() || null,
                 state: stateAbbr.trim().toUpperCase() || null,
                 genres: selectedGenres,
+                instruments: selectedInstruments.length > 0 ? selectedInstruments : null,
                 neighborhood: neighborhood.trim() || null,
                 spotify_url: spotifyUrl.trim() || null,
                 youtube_url: youtubeUrl.trim() || null,
@@ -138,6 +175,9 @@ export default function AddYourself() {
             setCity("");
             setStateAbbr("");
             setSelectedGenres([]);
+            setSelectedInstruments([]);
+            setInstrumentOtherText("");
+            setShowInstrumentOther(false);
             setNeighborhood("");
             setSpotifyUrl("");
             setYoutubeUrl("");
@@ -317,6 +357,112 @@ export default function AddYourself() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                <div style={fieldStyle}>
+                    <label>Instrument(s) <span style={{ fontWeight: "normal", color: "#777", fontSize: 12 }}>(up to 6, optional)</span></label>
+                    <select
+                        style={inputStyle}
+                        value=""
+                        disabled={selectedInstruments.length >= 6}
+                        onChange={handleInstrumentSelect}
+                    >
+                        <option value="">
+                            {selectedInstruments.length >= 6 ? "Max 6 instruments selected" : "Add an instrument..."}
+                        </option>
+                        {instruments
+                            .filter((inst) => !selectedInstruments.includes(inst))
+                            .map((inst) => (
+                                <option key={inst} value={inst}>{inst}</option>
+                            ))
+                        }
+                        {!showInstrumentOther && selectedInstruments.length < 6 && (
+                            <option value="__other__">Other (type your own)</option>
+                        )}
+                    </select>
+
+                    {showInstrumentOther && (
+                        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                            <input
+                                style={{ ...inputStyle, flex: 1 }}
+                                placeholder="Enter instrument name"
+                                value={instrumentOtherText}
+                                onChange={(e) => setInstrumentOtherText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") { e.preventDefault(); commitInstrumentOther(); }
+                                }}
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                onClick={commitInstrumentOther}
+                                disabled={!instrumentOtherText.trim()}
+                                style={{
+                                    padding: "8px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #2a9d5c",
+                                    background: instrumentOtherText.trim() ? "#2a9d5c" : "#ccc",
+                                    color: instrumentOtherText.trim() ? "#fff" : "#888",
+                                    cursor: instrumentOtherText.trim() ? "pointer" : "not-allowed",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                Add
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setShowInstrumentOther(false); setInstrumentOtherText(""); }}
+                                style={{
+                                    padding: "8px 12px",
+                                    borderRadius: 6,
+                                    border: "1px solid #ccc",
+                                    background: "#f2f2f2",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+
+                    {selectedInstruments.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                            {selectedInstruments.map((inst) => (
+                                <span
+                                    key={inst}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 4,
+                                        padding: "3px 8px",
+                                        borderRadius: 12,
+                                        background: "#edf2fb",
+                                        border: "1px solid #4a6fa5",
+                                        fontSize: 13,
+                                    }}
+                                >
+                                    {inst}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedInstruments(selectedInstruments.filter((x) => x !== inst))}
+                                        style={{
+                                            background: "none",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            padding: 0,
+                                            lineHeight: 1,
+                                            color: "#4a6fa5",
+                                            fontSize: 14,
+                                            fontWeight: "bold",
+                                        }}
+                                        aria-label={`Remove ${inst}`}
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>

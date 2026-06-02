@@ -27,6 +27,7 @@ class ArtistSubmissionCreate(BaseModel):
     city: str = Field(..., min_length=1, max_length=200)
     state: str = Field(..., min_length=1, max_length=200)
     genres: List[str] = Field(..., min_length=1, max_length=5)
+    instruments: Optional[List[str]] = Field(default=None)
 
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None
@@ -39,6 +40,23 @@ class ArtistSubmissionCreate(BaseModel):
 
     # honeypot field (frontend hides it)
     company: Optional[str] = None
+
+    @field_validator("instruments")
+    @classmethod
+    def validate_instruments(cls, v: Optional[List[str]]):
+        if v is None:
+            return v
+        if len(v) > 6:
+            raise ValueError("Maximum 6 instruments allowed")
+        cleaned = []
+        for inst in v:
+            inst = inst.strip()
+            if not inst:
+                raise ValueError("Instrument cannot be empty")
+            if len(inst) > 100:
+                raise ValueError("Instrument name too long")
+            cleaned.append(inst)
+        return cleaned
 
     @field_validator("genres")
     @classmethod

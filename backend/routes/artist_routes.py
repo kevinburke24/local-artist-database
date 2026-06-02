@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
 GENRES_PATH = BASE_DIR / "data" / "genres.csv"
+INSTRUMENTS_PATH = BASE_DIR / "data" / "instruments.csv"
 
 router = APIRouter(tags=["Artists"], prefix="/artists")
 
@@ -54,6 +55,10 @@ def create_artist(artist: ArtistCreate, db: Session = Depends(get_db)):
 @router.get("/genres")
 def get_genres():
     return {"genres": list(_load_genres())}
+
+@router.get("/instruments")
+def get_instruments():
+    return {"instruments": list(_load_instruments())}
 
 @router.get("/zip-lookup")
 def zip_lookup(zip: str = Query(..., min_length=5, max_length=5)):
@@ -167,6 +172,12 @@ def _load_genres() -> tuple:
         reader = csv.DictReader(f)
         return tuple(row["Genre"].strip() for row in reader if row.get("Genre", "").strip())
 
+@lru_cache(maxsize=1)
+def _load_instruments() -> tuple:
+    with open(INSTRUMENTS_PATH, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        return tuple(row["Instrument"].strip() for row in reader if row.get("Instrument", "").strip())
+
 @router.get("", response_model=ArtistListResponse)
 @limiter.limit("10/second")
 def list_artists(
@@ -251,6 +262,7 @@ def list_artists(
             "last_name": artist.last_name,
             "stage_name": artist.stage_name,
             "genre": artist.genre,
+            "instruments": artist.instruments,
             "city": artist.city,
             "state": artist.state,
             "zip_code": artist.zip_code,
@@ -301,6 +313,7 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
         state=payload.state.strip().upper() if payload.state else None,
         zip_code=payload.zip_code,
         genre=", ".join(payload.genres) if payload.genres else None,
+        instruments=", ".join(payload.instruments) if payload.instruments else None,
         spotify_url=payload.spotify_url,
         youtube_url=payload.youtube_url,
         instagram_url=payload.instagram_url,
@@ -336,6 +349,7 @@ def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
         "state": sub.state,
         "email": str(sub.email).strip().lower(),
         "genre": sub.genre,
+        "instruments": sub.instruments,
         "spotify_url": sub.spotify_url,
         "youtube_url": sub.youtube_url,
         "instagram_url": sub.instagram_url,

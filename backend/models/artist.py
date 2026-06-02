@@ -15,6 +15,7 @@ class Artist(Base):
     longitude = Column(DOUBLE_PRECISION)
     neighborhood = Column(String(50), nullable=True)
     genre = Column(String(250), nullable=False)
+    instruments = Column(Text, nullable=True)
     spotify_url = Column(Text)
     youtube_url = Column(Text)
     soundcloud_url = Column(Text)
