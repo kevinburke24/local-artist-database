@@ -10,6 +10,7 @@ interface Artist {
   last_name: string;
   stage_name: string;
   genre: string;
+  instruments?: string;
   city?: string;
   state?: string;
   zip_code: string;
@@ -51,6 +52,7 @@ export default function ArtistTable({ artists }: Props) {
             <th>Artist</th>
             <th>Stage Name</th>
             <th>Genre</th>
+            <th>Instruments</th>
             <th>City</th>
             <th>Distance</th>
             <th>Links</th>
@@ -67,6 +69,13 @@ export default function ArtistTable({ artists }: Props) {
               <td className="stage-name">{a.stage_name || "—"}</td>
               <td>
                 {a.genre ? <span className="genre-badge">{a.genre}</span> : "—"}
+              </td>
+              <td>
+                {a.instruments
+                  ? a.instruments.split(",").map((inst) => inst.trim()).filter(Boolean).map((inst) => (
+                      <span key={inst} className="genre-badge" style={{ marginRight: 4, marginBottom: 2, display: "inline-block" }}>{inst}</span>
+                    ))
+                  : "—"}
               </td>
               <td>
                 <div>

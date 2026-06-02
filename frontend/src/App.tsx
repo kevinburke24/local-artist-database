@@ -14,6 +14,7 @@ interface Artist {
   last_name: string;
   stage_name: string;
   genre: string;
+  instruments?: string;
   zip_code: string;
   neighborhood: string;
   spotify_url: string;
