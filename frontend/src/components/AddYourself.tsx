@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitArtist } from "../api/submissions";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function isFiveDigitZip(zip: string) {
     return /^\d{5}$/.test(zip.trim());
@@ -34,9 +36,50 @@ export default function AddYourself() {
     const [bio, setBio] = useState("");
     const [company, setCompany] = useState(""); // honeypot
 
+    const [genres, setGenres] = useState<string[]>([]);
+    const [zipError, setZipError] = useState<string | null>(null);
+    const [checkedZip, setCheckedZip] = useState<string | null>(null);
+
     const [submitting, setSubmitting] = useState(false);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch(`${API_URL}/artists/genres`)
+            .then((res) => res.json())
+            .then((data) => setGenres(data.genres))
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        const z = zip.trim();
+        if (!isFiveDigitZip(z)) {
+            setZipError(null);
+            setCheckedZip(null);
+            return;
+        }
+        let cancelled = false;
+        fetch(`${API_URL}/artists/zip-lookup?zip=${z}`)
+            .then((res) => {
+                if (res.ok) return res.json();
+                throw new Error("not found");
+            })
+            .then((data) => {
+                if (cancelled) return;
+                setZipError(null);
+                setCheckedZip(z);
+                if (data.neighborhood) setNeighborhood(data.neighborhood);
+                if (data.city) setCity(data.city);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setZipError("ZIP code not in our area");
+                setCheckedZip(z);
+            });
+        return () => { cancelled = true; };
+    }, [zip]);
+
+    const zipIsValid = isFiveDigitZip(zip) && checkedZip === zip.trim() && zipError === null;
 
     const linkCount = [spotifyUrl, youtubeUrl, instagramUrl, soundcloudUrl].filter(
         (s) => s.trim().length > 0
@@ -48,7 +91,7 @@ export default function AddYourself() {
         stageName.trim().length > 0 &&
         email.trim().length > 0 &&
         genre.trim().length > 0 &&
-        isFiveDigitZip(zip) &&
+        zipIsValid &&
         city.trim().length > 0 &&
         stateAbbr.trim().length === 2 &&
         linkCount >= 1;
@@ -60,7 +103,7 @@ export default function AddYourself() {
 
         if (!canSubmit) {
             setErrorMsg(
-                "Please fill in all required fields. ZIP code must be 5 digits, state must be a 2-letter abbreviation, and at least one link is required."
+                "Please fill in all required fields. ZIP code must be in our area, state must be a 2-letter abbreviation, and at least one link is required."
             );
             return;
         }
@@ -210,15 +253,22 @@ export default function AddYourself() {
                         {zip.trim() && !isFiveDigitZip(zip) && (
                             <div style={{ color: "#c0392b", fontSize: 12 }}>Must be 5 digits</div>
                         )}
+                        {zipError && (
+                            <div style={{ color: "#c0392b", fontSize: 12 }}>{zipError}</div>
+                        )}
                     </div>
                     <div style={fieldStyle}>
                         <label>Genre *</label>
-                        <input
+                        <select
                             style={inputStyle}
                             value={genre}
                             onChange={(e) => setGenre(e.target.value)}
-                            placeholder="folk, pop, soul..."
-                        />
+                        >
+                            <option value="">Select a genre...</option>
+                            {genres.map((g) => (
+                                <option key={g} value={g}>{g}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 

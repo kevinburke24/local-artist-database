@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 CSV_PATH = BASE_DIR / "data" / "uszips.csv"
+GENRES_PATH = BASE_DIR / "data" / "genres.csv"
 
 router = APIRouter(tags=["Artists"], prefix="/artists")
 
@@ -133,6 +134,38 @@ def get_lat_lon_from_zip(zip_code: str, csv_path: str) -> Tuple[float, float]:
         return zip_map[z]
     except KeyError:
         raise ZipNotFoundError(f"ZIP code not found: {z}")
+
+@lru_cache(maxsize=1)
+def _load_zip_info_map(csv_path: str) -> dict[str, dict]:
+    path = Path(csv_path)
+    zip_info: dict[str, dict] = {}
+    with path.open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            z = row.get("zip", "").strip()
+            if len(z) == 5 and z.isdigit():
+                zip_info[z] = {
+                    "neighborhood": row.get("neighborhood", "").strip() or None,
+                    "city": row.get("city", "").strip() or None,
+                }
+    return zip_info
+
+@lru_cache(maxsize=1)
+def _load_genres() -> tuple:
+    with open(GENRES_PATH, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        return tuple(row["Genre"].strip() for row in reader if row.get("Genre", "").strip())
+
+@router.get("/genres")
+def get_genres():
+    return {"genres": list(_load_genres())}
+
+@router.get("/zip-lookup")
+def zip_lookup(zip: str = Query(..., min_length=5, max_length=5)):
+    info = _load_zip_info_map(str(CSV_PATH)).get(zip.strip())
+    if not info:
+        raise HTTPException(status_code=404, detail="ZIP code not found")
+    return info
 
 @router.get("", response_model=ArtistListResponse)
 @limiter.limit("10/second")
