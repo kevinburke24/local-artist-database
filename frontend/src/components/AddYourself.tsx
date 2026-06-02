@@ -46,8 +46,8 @@ export default function AddYourself() {
 
     useEffect(() => {
         fetch(`${API_URL}/artists/genres`)
-            .then((res) => res.json())
-            .then((data) => setGenres(data.genres))
+            .then((res) => (res.ok ? res.json() : Promise.reject()))
+            .then((data) => setGenres(data.genres ?? []))
             .catch(() => {});
     }, []);
 
