@@ -51,6 +51,17 @@ def create_artist(artist: ArtistCreate, db: Session = Depends(get_db)):
     db.refresh(db_artist)
     return db_artist
 
+@router.get("/genres")
+def get_genres():
+    return {"genres": list(_load_genres())}
+
+@router.get("/zip-lookup")
+def zip_lookup(zip: str = Query(..., min_length=5, max_length=5)):
+    info = _load_zip_info_map(str(CSV_PATH)).get(zip.strip())
+    if not info:
+        raise HTTPException(status_code=404, detail="ZIP code not found")
+    return info
+
 @router.get("/{artist_id}", response_model=ArtistResponse)
 def get_artist(artist_id: int, db: Session = Depends(get_db)):
     db_artist = db.query(Artist).filter(Artist.id == artist_id).first()
@@ -155,17 +166,6 @@ def _load_genres() -> tuple:
     with open(GENRES_PATH, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         return tuple(row["Genre"].strip() for row in reader if row.get("Genre", "").strip())
-
-@router.get("/genres")
-def get_genres():
-    return {"genres": list(_load_genres())}
-
-@router.get("/zip-lookup")
-def zip_lookup(zip: str = Query(..., min_length=5, max_length=5)):
-    info = _load_zip_info_map(str(CSV_PATH)).get(zip.strip())
-    if not info:
-        raise HTTPException(status_code=404, detail="ZIP code not found")
-    return info
 
 @router.get("", response_model=ArtistListResponse)
 @limiter.limit("10/second")
