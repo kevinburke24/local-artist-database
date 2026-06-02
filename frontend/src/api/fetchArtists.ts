@@ -6,6 +6,7 @@ export async function fetchArtists(params: any) {
     if (params.stage_name) query.append("stage_name", params.stage_name)
     if (params.genre) query.append("genre", params.genre)
     if (params.neighborhood) query.append("neighborhood", params.neighborhood);
+    if (params.instrument) query.append("instrument", params.instrument);
     if (params.filter_zip) query.append("filter_zip", params.filter_zip);
     if (params.origin_zip) query.append("origin_zip", params.origin_zip)
     if (params.radius) query.append("radius", params.radius);

@@ -7,6 +7,8 @@ interface Props {
   setZip: (v: string) => void;
   neighborhood: string;
   setNeighborhood: (v: string) => void;
+  instrument: string;
+  setInstrument: (v: string) => void;
   onSearch: () => void;
 }
 
@@ -15,6 +17,7 @@ export default function ArtistFilters({
   genre, setGenre,
   zip, setZip,
   neighborhood, setNeighborhood,
+  instrument, setInstrument,
   onSearch,
 }: Props) {
   function handleKey(e: React.KeyboardEvent) {
@@ -26,6 +29,7 @@ export default function ArtistFilters({
       <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKey} />
       <input placeholder="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} onKeyDown={handleKey} />
       <input placeholder="Neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} onKeyDown={handleKey} />
+      <input placeholder="Instrument" value={instrument} onChange={(e) => setInstrument(e.target.value)} onKeyDown={handleKey} />
       <input placeholder="ZIP" value={zip} onChange={(e) => setZip(e.target.value)} onKeyDown={handleKey} style={{ maxWidth: 90 }} />
       <button className="btn btn-primary" onClick={onSearch}>Search</button>
     </div>

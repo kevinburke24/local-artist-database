@@ -191,6 +191,7 @@ def list_artists(
     last_name = params.last_name
     stage_name = params.stage_name
     genre = params.genre
+    instrument = params.instrument
     origin_zip = params.origin_zip
     filter_zip = params.filter_zip
     radius = params.radius
@@ -227,6 +228,8 @@ def list_artists(
             query = query.filter(Artist.neighborhood.ilike(f"%{neighborhood}%"))
         if genre:
             query = query.filter(Artist.genre.ilike(f"%{genre}%"))
+        if instrument:
+            query = query.filter(Artist.instruments.ilike(f"%{instrument}%"))
         if first_name:
             query = query.filter(Artist.first_name.ilike(f"%{first_name}%"))
         if last_name:
