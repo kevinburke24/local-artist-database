@@ -33,7 +33,7 @@ class ArtistSubmission(Base):
     city = Column(String(100), nullable=True)
     state = Column(String(2), nullable=True)
     neighborhood = Column(String(50), nullable=True)
-    genre = Column(String(80), nullable=False)
+    genre = Column(String(250), nullable=True)
     bio = Column(Text, nullable=True)
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
     verify_token_hash = Column(String(128), nullable=False)

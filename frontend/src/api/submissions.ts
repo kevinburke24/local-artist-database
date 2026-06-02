@@ -8,7 +8,7 @@ export type ArtistSubmissionsCreate = {
     zip_code: string;
     city?: string | null;
     state?: string | null;
-    genre: string;
+    genres: string[];
     neighborhood?: string | null;
     spotify_url?: string | null;
     youtube_url?: string | null;

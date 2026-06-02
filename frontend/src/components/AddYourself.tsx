@@ -27,7 +27,7 @@ export default function AddYourself() {
     const [zip, setZip] = useState("");
     const [city, setCity] = useState("");
     const [stateAbbr, setStateAbbr] = useState("");
-    const [genre, setGenre] = useState("");
+    const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const [neighborhood, setNeighborhood] = useState("");
     const [spotifyUrl, setSpotifyUrl] = useState("");
     const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -90,7 +90,7 @@ export default function AddYourself() {
         lastName.trim().length > 0 &&
         stageName.trim().length > 0 &&
         email.trim().length > 0 &&
-        genre.trim().length > 0 &&
+        selectedGenres.length > 0 &&
         zipIsValid &&
         city.trim().length > 0 &&
         stateAbbr.trim().length === 2 &&
@@ -117,7 +117,7 @@ export default function AddYourself() {
                 zip_code: zip.trim(),
                 city: city.trim() || null,
                 state: stateAbbr.trim().toUpperCase() || null,
-                genre: genre.trim(),
+                genres: selectedGenres,
                 neighborhood: neighborhood.trim() || null,
                 spotify_url: spotifyUrl.trim() || null,
                 youtube_url: youtubeUrl.trim() || null,
@@ -137,7 +137,7 @@ export default function AddYourself() {
             setZip("");
             setCity("");
             setStateAbbr("");
-            setGenre("");
+            setSelectedGenres([]);
             setNeighborhood("");
             setSpotifyUrl("");
             setYoutubeUrl("");
@@ -258,17 +258,64 @@ export default function AddYourself() {
                         )}
                     </div>
                     <div style={fieldStyle}>
-                        <label>Genre *</label>
+                        <label>Genre * <span style={{ fontWeight: "normal", color: "#777", fontSize: 12 }}>(up to 5)</span></label>
                         <select
                             style={inputStyle}
-                            value={genre}
-                            onChange={(e) => setGenre(e.target.value)}
+                            value=""
+                            disabled={selectedGenres.length >= 5}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val && !selectedGenres.includes(val) && selectedGenres.length < 5) {
+                                    setSelectedGenres([...selectedGenres, val]);
+                                }
+                                e.target.value = "";
+                            }}
                         >
-                            <option value="">Select a genre...</option>
-                            {genres.map((g) => (
+                            <option value="">
+                                {selectedGenres.length >= 5 ? "Max 5 genres selected" : "Add a genre..."}
+                            </option>
+                            {genres.filter((g) => !selectedGenres.includes(g)).map((g) => (
                                 <option key={g} value={g}>{g}</option>
                             ))}
                         </select>
+                        {selectedGenres.length > 0 && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                                {selectedGenres.map((g) => (
+                                    <span
+                                        key={g}
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 4,
+                                            padding: "3px 8px",
+                                            borderRadius: 12,
+                                            background: "#e8f5ef",
+                                            border: "1px solid #2a9d5c",
+                                            fontSize: 13,
+                                        }}
+                                    >
+                                        {g}
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedGenres(selectedGenres.filter((x) => x !== g))}
+                                            style={{
+                                                background: "none",
+                                                border: "none",
+                                                cursor: "pointer",
+                                                padding: 0,
+                                                lineHeight: 1,
+                                                color: "#2a9d5c",
+                                                fontSize: 14,
+                                                fontWeight: "bold",
+                                            }}
+                                            aria-label={`Remove ${g}`}
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

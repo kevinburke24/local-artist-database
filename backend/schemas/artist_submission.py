@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from typing import Optional, List
 from urllib.parse import urlparse
 
 ALLOWED_DOMAINS = {
@@ -26,7 +26,7 @@ class ArtistSubmissionCreate(BaseModel):
     zip_code: Optional[str] = Field(default=None, max_length=10)
     city: str = Field(..., min_length=1, max_length=200)
     state: str = Field(..., min_length=1, max_length=200)
-    genre: Optional[str] = Field(default=None, max_length=80)
+    genres: List[str] = Field(..., min_length=1, max_length=5)
 
     spotify_url: Optional[str] = None
     youtube_url: Optional[str] = None
@@ -39,6 +39,23 @@ class ArtistSubmissionCreate(BaseModel):
 
     # honeypot field (frontend hides it)
     company: Optional[str] = None
+
+    @field_validator("genres")
+    @classmethod
+    def validate_genres(cls, v: List[str]):
+        if not v:
+            raise ValueError("At least one genre is required")
+        if len(v) > 5:
+            raise ValueError("Maximum 5 genres allowed")
+        cleaned = []
+        for g in v:
+            g = g.strip()
+            if not g:
+                raise ValueError("Genre cannot be empty")
+            if len(g) > 80:
+                raise ValueError("Genre name too long")
+            cleaned.append(g)
+        return cleaned
 
     @field_validator("zip_code")
     @classmethod
