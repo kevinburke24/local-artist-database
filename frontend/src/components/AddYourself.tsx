@@ -223,7 +223,10 @@ export default function AddYourself() {
                         marginBottom: 16,
                     }}
                 >
-                    {successMsg}
+                    <div>{successMsg}</div>
+                    <a href="/" style={{ display: "inline-block", marginTop: 10, color: "#2a9d5c", fontWeight: 500 }}>
+                        ← Back to search
+                    </a>
                 </div>
             )}
             {errorMsg && (

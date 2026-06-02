@@ -411,7 +411,7 @@ class ArtistEditBody(BaseModel):
     bio: Optional[str] = None
 
 @router.post("/{artist_id}/request-edit")
-def request_edit(artist_id: int, body: EditRequestBody, db: Session = Depends(get_db)):
+def request_edit(artist_id: int, body: EditRequestBody, request: Request, db: Session = Depends(get_db)):
     artist = db.query(Artist).filter(Artist.id == artist_id).first()
     # Always return the same response to avoid leaking whether artist/email exists
     generic_response = {"ok": True, "message": "If that email matches our records, you'll receive an edit link shortly."}
@@ -425,7 +425,9 @@ def request_edit(artist_id: int, body: EditRequestBody, db: Session = Depends(ge
     artist.edit_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     db.commit()
 
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    # Prefer the Origin header from the browser request over the env var so the
+    # link is always correct regardless of which deployment sends the email.
+    frontend_url = request.headers.get("origin") or os.getenv("FRONTEND_URL", "http://localhost:5173")
     edit_url = f"{frontend_url}/artists/{artist_id}/edit?token={raw_token}"
     send_edit_link_email(to_email=artist.email, first_name=artist.first_name, edit_url=edit_url)
     return generic_response

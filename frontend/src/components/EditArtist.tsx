@@ -196,8 +196,11 @@ export default function EditArtist() {
                 )
             ) : success ? (
                 <div style={{ padding: 16, border: "1px solid #2a9d5c", borderRadius: 8, background: "#f0faf5" }}>
-                    Your listing has been updated!{" "}
-                    <a href={`/artists/${id}`}>View it here.</a>
+                    <div>Your listing has been updated!</div>
+                    <div style={{ marginTop: 10, display: "flex", gap: 16 }}>
+                        <a href={`/artists/${id}`} style={{ color: "#2a9d5c", fontWeight: 500 }}>View your listing</a>
+                        <a href="/" style={{ color: "#2a9d5c", fontWeight: 500 }}>← Back to search</a>
+                    </div>
                 </div>
             ) : (
                 <form onSubmit={handleEditSubmit} style={{ display: "grid", gap: 14 }}>
