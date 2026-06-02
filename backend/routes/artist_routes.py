@@ -226,8 +226,6 @@ def list_artists(
             "youtube_url": artist.youtube_url,
             "instagram_url": artist.instagram_url,
             "soundcloud_url": artist.soundcloud_url,
-            "spotify_album_count": artist.spotify_album_count,
-            "spotify_track_count": artist.spotify_track_count,
             "created_at": artist.created_at,
             "distance": "{:.2f}".format(distance)
         }
@@ -294,24 +292,6 @@ def create_artist_submission(payload: ArtistSubmissionCreate, request: Request, 
 
     return {"ok": True, "submission_id": sub.id}
 
-def _try_fetch_spotify_info(artist) -> None:
-    if not artist.spotify_url:
-        return
-    try:
-        from utils.spotify import get_access_token, get_artist_info
-        token = get_access_token()
-        info = get_artist_info(artist.spotify_url, token)
-        if info is not None:
-            artist.stage_name = info["name"]
-            artist.spotify_album_count = info["album_count"]
-            artist.spotify_track_count = info["track_count"]
-            artist.spotify_followers_updated_at = datetime.now(timezone.utc)
-            logger.info("Spotify info fetched for artist %s: name=%s albums=%d tracks=%d", artist.id, info["name"], info["album_count"], info["track_count"])
-        else:
-            logger.warning("Spotify returned no info for URL: %s", artist.spotify_url)
-    except Exception as e:
-        logger.error("Failed to fetch Spotify info for artist %s (url=%s): %s", artist.id, artist.spotify_url, e)
-
 def artist_kwargs_from_submission(sub: ArtistSubmission) -> dict:
     lat, lon = get_lat_lon_from_zip(sub.zip_code, CSV_PATH)
     return {
@@ -357,7 +337,6 @@ def verify_submission(token: str = Query(...), db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
-    _try_fetch_spotify_info(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
@@ -474,7 +453,6 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
     artist = Artist(**artist_kwargs_from_submission(sub))
     db.add(artist)
     db.flush()
-    _try_fetch_spotify_info(artist)
 
     sub.status = SubmissionStatus.approved
     sub.reviewed_at = datetime.now(timezone.utc)
@@ -485,14 +463,6 @@ def approve_submission(submission_id: int, db: Session = Depends(get_db)):
 
 class RejectBody(BaseModel):
     reason: Optional[str] = None
-
-@router.post("/admin/sync-spotify", dependencies=[Depends(require_admin)])
-def sync_spotify_followers(db: Session = Depends(get_db)):
-    from utils.spotify import sync_all_artists
-    result = sync_all_artists(db)
-    return {"ok": True, **result}
-
-
 
 @router.post("/admin/artist-submissions/{submission_id}/reject", dependencies=[Depends(require_admin)])
 def reject_submission(submission_id: int, body: RejectBody, db: Session = Depends(get_db)):

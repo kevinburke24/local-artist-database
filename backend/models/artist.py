@@ -15,8 +15,6 @@ class Artist(Base):
     longitude = Column(DOUBLE_PRECISION)
     neighborhood = Column(String(50), nullable=True)
     genre = Column(String(50), nullable=False)
-    spotify_album_count = Column(Integer)
-    spotify_track_count = Column(Integer)
     spotify_url = Column(Text)
     youtube_url = Column(Text)
     soundcloud_url = Column(Text)
@@ -27,7 +25,6 @@ class Artist(Base):
     edit_token_expires_at = Column(TIMESTAMP(timezone=True), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True), onupdate=func.now())
-    spotify_followers_updated_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_genre", "genre"),
